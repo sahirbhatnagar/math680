@@ -40,21 +40,15 @@ for(i in 1:nrow(data)){
   data$transf2[i] <- z.tr[names(z.tr) == as.character(data$z[i])]
 }
 
-fit3 <- lm(y ~ transf2 + I(transf2^2) + I(transf2^3), data)
-new.comp3 <- seq(min(data$transf2),max(data$transf2), length.out=1000)
-new.val3 <- predict(object = fit3, newdata = data.frame(transf2=new.comp3))
-plot(y ~ transf2, data,
-     xlab="Compliance", ylab="Improvement")
-lines(x=new.comp3, y=new.val3, col="green")
-abline(v=0, lty=2); abline(h=0, lty=2)
-
-hist(data$transf2)
-
 # get data into form so that it works with Sy's functions
-DT <- data[,c("y","transf2")]
-colnames(DT) <- c("y","x")
-head(DT)
+DT <- as.data.table(data[,c("y","transf2")])
+setnames(DT,"transf2","x")
+
+# make the transformation now. This is how my function was written up
 DT <- transform(DT, x2=x^2, x3=x^3, x4=x^4, x5=x^5, x6=x^6)
+
+# round the compliances to 5 digits, so that we can find the 11 subjects for Figure 5
+DT[,x:=round(x,5)]
 
 # Clean up environment
 rm(list=setdiff(ls(),"DT"))
