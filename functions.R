@@ -8,19 +8,16 @@
 
 library(plyr)
 library(data.table)
-library(bestglm)
 library(doParallel)
 library(foreach)
 library(bootstrap)
 library(splines)
 library(ggplot2)
 library(reshape2)
-library(glmnet)
-library(leaps)
 library(car)
 library(grid)
-library(ncvreg)
 library(calibrate)
+library(xtable)
 registerDoParallel(cores = 4)
 source("multiplot.R")
 
@@ -191,7 +188,7 @@ fit.once <- function(j, predict=-2.32316){
     
     # create data frame of results
     dat <- !is.na(dfCoefNum)
-    dat <- data.frame(dat,criteria=criterion, muhat=muhat)
+    dat <- data.frame(dat,criteria=criterion, muhat=muhat, p=p)
     
     return(dat)
 }

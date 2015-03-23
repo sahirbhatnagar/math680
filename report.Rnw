@@ -1,0 +1,238 @@
+\documentclass[11pt,letter]{article}    
+\usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{amssymb} %math symbols
+\usepackage{amsmath,amsthm,amssymb,bbm} %math stuff
+\usepackage{mathrsfs}
+%\usepackage[margin=0.1in]{geometry}
+%\usepackage{fullpage}
+\usepackage{comment}
+\usepackage{ctable}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{authblk}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{comment}
+\usepackage{epstopdf}
+\usepackage{setspace} %Spacing
+\usepackage{graphicx,graphics}
+\usepackage{booktabs,tabularx}
+\usepackage{enumerate}
+\usepackage{makecell}
+\usepackage{xfrac}
+\usepackage[latin1]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{trees}
+\usepackage{listings} 
+\lstloadlanguages{R} 
+\lstset{language=R,basicstyle=\smaller[2],commentstyle=\rmfamily\smaller, 
+  showstringspaces=false,% 
+  xleftmargin=4ex,literate={<-}{{$\leftarrow$}}1 {~}{{$\sim$}}1} 
+\lstset{escapeinside={(*}{*)}}   % for (*\ref{ }*) inside lstlistings (Scode) 
+%\usepackage[usenames,dvipsnames]{pstricks}
+%\usepackage{epsfig}
+%\usepackage{pst-grad} % For gradients
+%\usepackage{pst-plot} % For axes
+
+\usepackage{color, colortbl, xcolor}
+\definecolor{Gray}{gray}{0.9}
+
+\newcommand {\dsum}{\displaystyle \sum}
+\newcommand {\expp}[1]{\exp \left\lbrace {#1}\right\rbrace }
+\newcommand {\dprod}{\displaystyle \prod} 
+\newcommand {\E}{\mathbb{E}} 
+\newcommand {\bs}{\boldsymbol} 
+\newcommand{\dpart}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand {\tlde}[1] {\underset{\widetilde{}}{#1}}
+\newcommand{\inprob}{\xrightarrow p}
+\newcommand{\indist}{\xrightarrow d}
+\newcommand{\xn}{X_1,\ldots,X_n}
+\newcommand{\sumn}{\sum\limits_{i=1}^{n}}
+\newcommand{\sumj}{\sum\limits_{j=0}^{\infty}}
+\newcommand{\xbar}{\bar{X}}
+\newcommand{\odds}[1]{\frac{#1}{1-#1}}
+\newcommand{\ww}{\frac{\log t - z\beta}{\sigma}}
+\newcommand{\wwm}{\frac{\log t_{0.5} - z\beta}{\sigma}}
+\newcommand{\zz}[1]{\left[ {#1}\right] }
+\newcommand{\zb}[1]{\left\lbrace  {#1}\right\rbrace  }
+\newcommand{\nk}[2]{\left( \begin{array}{c} {#1}\\ {#2} \end{array}\right)}
+\newcommand{\nuone}{\frac{\Gamma (\frac{\nu+1}{2})}{\Gamma (\frac{\nu}{2})}}
+\newcommand{\nutwo}{\frac{\Gamma (\frac{\nu+2}{2})}{\Gamma (\frac{\nu}{2})}}
+\newcommand{\bb}{\boldsymbol{\beta}}
+\newcommand{\betaf}{\frac{\Gamma (\alpha+\beta)}{\Gamma (\alpha) \Gamma (\beta)}}
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\providecommand{\eeee}[1]{\ensuremath{\times 10^{#1}}}
+\setstretch{1} %line spacing
+
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\pagestyle{empty}
+
+%\pagestyle{plain}
+%\newcommand{\hmwkTitle}{Assignment\ \#3} % Assignment title
+%\newcommand{\hmwkDueDate}{Monday,\ March\ 24,\ 2014} % Due date
+%\newcommand{\hmwkClass}{MATH\ 783} % Course/class
+%\newcommand{\hmwkClassTime}{10:05am} % Class/lecture time
+%\newcommand{\hmwkClassInstructor}{Dr. Abbas Khalili} % Teacher/lecturer
+%\newcommand{\hmwkAuthorName}{Sahir Rai Bhatnagar} % Your name
+%\newcommand{\hmwkStudentID}{id \# 260194225} % student id
+%\newcommand{\heading}[1]{\bigskip \hrule \smallskip \noindent \texttt{#1} \smallskip \hrule}
+
+
+\newcommand{\test}[2]{\heading{\textbf{Test }$\bs{H}_0$ : ${#1}$ \textbf{versus} $\bs{H}_A$ : ${#2}$ at $\alpha=0.05$}}
+\newcommand{\tm}[1]{\textrm{{#1}}}
+\newcommand{\xf}{\mathcal{X}}
+\newcommand{\pfrac}[2]{\left( \frac{#1}{#2}\right)}
+\newcommand{\e}{{\mathsf E}}
+\newcommand{\bt}{\boldsymbol{\theta}}
+\newcommand{\mc}[2]{\multicolumn{#1}{c}{#2}}
+
+
+\usepackage[pagebackref=true,bookmarks]{hyperref}
+                             % Neat package to turn href, ref, cite, gloss entries
+                             % into hyperlinks in the dvi file.
+                             % Make sure this is the last package loaded.
+                             % Use with dvips option to get hyperlinks to work in ps and pdf
+                             % files.  Unfortunately, then they don't work in the dvi file!
+                             % Use without the dvips option to get the links to work in the dvi file.
+
+                             % Note:  \floatstyle{ruled} don't work properly; so change to plain.
+                             % Not as pretty, but functional...
+                             % The bookmarks option sets up proper bookmarks in the pdf file :)
+\hypersetup{
+    unicode=false,          
+    pdftoolbar=true,        
+    pdfmenubar=true,        
+    pdffitwindow=false,     % window fit to page when opened
+    pdfstartview={FitH},    % fits the width of the page to the window
+    pdftitle={Assignment 2, MATH 680},    % title
+    pdfauthor={Sahir Rai Bhatnagar},     % author
+    pdfsubject={Subject},   % subject of the document
+    pdfcreator={Sahir Rai Bhatnagar},   % creator of the document
+    pdfproducer={Sahir Rai Bhatnagar}, % producer of the document
+    pdfkeywords={}, % list of keywords
+    pdfnewwindow=true,      % links in new window
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=red,          % color of internal links (change box color with linkbordercolor)
+    citecolor=blue,        % color of links to bibliography
+    filecolor=black,      % color of file links
+    urlcolor=cyan           % color of external links
+}
+
+ 
+
+%\title{
+%\vspace{2in}
+%\textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+%\normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate\ at\ \hmwkClassTime}\\
+%\vspace{0.1in}\large{\textit{\hmwkClassInstructor}}
+%\vspace{3in}
+%}
+
+%\author{\textbf{\hmwkAuthorName}}
+
+%\date{\hmwkStudentID} % Insert date here if you want it to appear below your name
+%<<echo=FALSE, results= 'hide', message = FALSE>>=
+%options(width=60)
+%@
+\newcommand{\bh}{\hat{\beta}}
+\newcommand{\xtx}{\mathbf{X}^T\mathbf{X}}
+\newcommand{\xtxinv}{\left(\mathbf{X}^T\mathbf{X}\right)^{-1}}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\dnorm}[3]{\frac{1}{\sqrt{2\pi #3}} \expp{- \frac{\left( #1-#2\right) ^2}{2 #3}}  }
+\newcommand{\dpois}[3]{\frac{\exp\left(-#2\right) #3 }{#1 !}}
+
+\renewcommand{\headrulewidth}{0.0pt}
+\renewcommand{\footrulewidth}{0.0pt}
+
+\setlength{\textheight}{9.00in}
+\setlength{\textwidth}{7.00in}
+\setlength{\topmargin}{-0.5in}
+\setlength{\evensidemargin}{-0.25in}
+\setlength{\oddsidemargin}{-0.25in}
+
+\renewcommand{\baselinestretch}{1.2}
+
+\makeatletter
+
+\makeatother
+\lfoot{} \cfoot{ } \rfoot{{\small{\em Page \thepage \ of \pageref{LastPage}}}}
+
+\begin{document}
+\pagestyle{fancy}
+
+%\title{\vspace{-7ex}MATH 680 - Assignment 1 - February 20, 2015}
+%\author{Sahir Bhatnagar \vspace{-4ex}}
+
+\title{MATH 680 - Assignment 2 - March 30, 2015}
+\author{Sahir Bhatnagar \& Maxime Turgeon}
+
+\affil{Department of Epidemiology, Biostatistics and Occupational Health \\ McGill University}
+%\date{}
+\maketitle
+
+%\begin{abstract}
+%Here is our abstract.  We have taken the ideas from \citet{WuLange2008}, and coded them up.
+%\end{abstract}
+
+\section{Reproducing Numerical Results for Sections 1-4}
+
+<<setup, echo=FALSE,warning=FALSE,message=FALSE>>=
+library(knitr)
+library(data.table)
+options(width=70, digits=2)
+set.seed(45)
+opts_chunk$set(echo = FALSE, tidy = TRUE, autodep = TRUE)
+dep_auto()
+opts_template$set(
+    fig.large = list(fig.width = 8, fig.height = 6, fig.align = 'center'),
+    fig.small = list(fig.width = 3.5, fig.height = 3, fig.align = 'center')
+)
+knit_hooks$set(crop = hook_pdfcrop)
+read_chunk("section1.R")
+read_chunk("section2.R")
+@
+
+\subsection{Introduction}
+
+<<import-data, echo=FALSE,warning=FALSE,message=FALSE>>=
+@
+
+<<hist-compliance,echo=FALSE,fig.cap='Histogram of copmliance values after transformation, so that it looks like a standard normal distribution',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+@
+
+<<figure-1,echo=FALSE,fig.cap='Choleterol decrease vs. compliance with cubic regression fitted curve',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+@
+
+\subsection{Nonparametric Bootstrap Smoothing}
+
+<<import-functions, echo=FALSE,warning=FALSE,message=FALSE>>=
+@
+
+<<bootstrap-samples, cache=TRUE>>=
+@
+
+<<Cp-boot, cache=TRUE>>=
+@
+
+<<Cp-original, cache=TRUE>>=
+@
+
+<<table1, results='asis',echo=FALSE>>=
+print(xtable(tab1),include.rownames=FALSE)
+@
+
+<<figure-3,echo=FALSE,fig.cap='B=4000 bootstrap replications of the Cp-OLS regression estimate for Subject 1. Triangles indicate 2.5th and 97.5th percentiles of the histogram',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+@
+
+
+
+\subsection{Accuracy of the Smoothed Bootstrap Estimates}
+
+
+
+\subsection{Parametric Bootstrap Smoothing}
+
+
+
+\end{document}

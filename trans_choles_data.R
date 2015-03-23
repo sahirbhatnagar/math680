@@ -14,9 +14,8 @@ library(bootstrap)
 fit <- lm(y ~ z + I(z^2) + I(z^3), data=cholost)
 new.comp <- seq(0,100, length.out=1000)
 new.val <- predict(object = fit, newdata = data.frame(z=new.comp))
-plot(y ~ z, data=cholost, 
-     xlab="Compliance", ylab="Improvement")
-lines(x=new.comp, y=new.val, col="green")
+# plot(y ~ z, data=cholost, xlab="Compliance", ylab="Improvement")
+# lines(x=new.comp, y=new.val, col="green")
 
 #transformation 1 - scaled ranks
 
@@ -27,9 +26,8 @@ data$transf <- qnorm((1:nrow(data) - 0.5)/nrow(data))
 fit2 <- lm(y ~ transf + I(transf^2) + I(transf^3), data)
 new.comp2 <- seq(min(data$transf),max(data$transf), length.out=1000)
 new.val2 <- predict(object = fit2, newdata = data.frame(transf=new.comp2))
-plot(y ~ transf, data, 
-     xlab="Compliance", ylab="Improvement")
-lines(x=new.comp2, y=new.val2, col="green")
+# plot(y ~ transf, data, xlab="Compliance", ylab="Improvement")
+# lines(x=new.comp2, y=new.val2, col="green")
 
 #transformation 2 - accounting for ties
 
@@ -50,6 +48,4 @@ DT <- transform(DT, x2=x^2, x3=x^3, x4=x^4, x5=x^5, x6=x^6)
 # round the compliances to 5 digits, so that we can find the 11 subjects for Figure 5
 DT[,x:=round(x,5)]
 
-# Clean up environment
-rm(list=setdiff(ls(),"DT"))
 
