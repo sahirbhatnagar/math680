@@ -26,3 +26,4 @@
 *.out
 *.synctex.gz
 cache/*
+*.tex
