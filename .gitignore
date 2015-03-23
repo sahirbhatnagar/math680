@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 *.pdf
+*.log
+*synctex.gz
+concordance
