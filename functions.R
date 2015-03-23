@@ -56,34 +56,38 @@ my.kfold <- function(DF, K=5, REP=5, formulas) {
     CVErr/REP
 }
 
-#this function works for the compliance dataset ----
-fit.best <- function(j, method="AIC", K, REP, predict=0.771191592){
-    #compiance value for predicted value
+# this function works for the compliance dataset ----
+fit.best <- function(j, method="AIC", K, REP, predict=-2.32316){
+    
     obs <- predict
     DF <- j
     n <- nrow(DF)
-    y <- DF[,"y"]
-    x <- DF[,c(-1)] 
+    y <- DF[,.(y)]
+    x <- DF[,.(x,x2,x3,x4,x5,x6)]
     
-    Cols <- names(DF)
-    Cols <- Cols[! Cols %in% "y" & ! Cols %in% "x0"]
-    p <- length(Cols)
-    id <- unlist(lapply(1:p, function(i) combn(1:p,i,simplify=F)), recursive=F)
-    #all possible formulas
-    #formulas <- sapply(id,function(i) paste("y~",paste(Cols[i],collapse="+")))
-    #6 candidate models
-    formulas <- list("y~x", "y~x+x2", "y~x+x2+x3", "y~x+x2+x3+x4", "y~x+x2+x3+x4+x5", "y~x+x2+x3+x4+x5+x6")
+    #     # all possible models
+    #     Cols <- names(DF)
+    #     Cols <- Cols[! Cols %in% "y" & ! Cols %in% "x0"]
+    #     p <- length(Cols)
+    #     id <- unlist(lapply(1:p, function(i) combn(1:p,i,simplify=F)), recursive=F)
+    #     formulas <- sapply(id,function(i) paste("y~",paste(Cols[i],collapse="+")))
     
-    #fit all possible models
+    # 6 candidate models
+    formulas <- list("y~x", "y~x+x2", "y~x+x2+x3", "y~x+x2+x3+x4", 
+                     "y~x+x2+x3+x4+x5", "y~x+x2+x3+x4+x5+x6")
+    
+    # fit all candidate models
     fits <- lapply(formulas, function(i) lm(as.formula(i),data=DF))
     
-    # log likelihoods for the models, produces same result as logLik function in R base
-    log.liks <- sapply(fits, function(i) {(-n/2)*log(sum(i$residuals^2)/n) - n/2 - (n/2)*log(2*pi)} )
+    # log likelihoods for the models, produces same result as logLik function 
+    # in R base (sapply(fits,logLik))
+    log.liks <- sapply(fits, function(i) 
+        { (-n/2)*log(sum(i$residuals^2)/n) - n/2 - (n/2)*log(2*pi)} )
     
-    #coefficient values
+    # coefficient values
     dfCoefNum <- ldply(fits, function(x) as.data.frame( t(coef(x))))
     
-    #number of coefficients per model including intercept
+    # number of coefficients per model including intercept
     p <- apply(dfCoefNum, 1, function(i) sum(!is.na(i)))
     
     #selection criterion
@@ -92,13 +96,16 @@ fit.best <- function(j, method="AIC", K, REP, predict=0.771191592){
     
     if (method=="BIC") {criterion <- -2*log.liks + log(n)*(p+1)}
     
-    if (method=="CV")  {criterion <- sapply(fits, function(i) {(1/n)*sum(  ((y-fitted.values(i))^2)/(1-influence(i)$hat)^2)})}
+    if (method=="CV")  {criterion <- sapply(fits, function(i) 
+        {(1/n)*sum(  ((y-fitted.values(i))^2)/(1-influence(i)$hat)^2)})}
     
     if (method=="CP")  {
-        #sigma full model
-        sigma_full <- sum(residuals(fits[[6]])^2)/(164-6-1)
-        ssres <- sapply(fits, function(i) { (1/n)*sum(i$residuals^2) }) 
-        criterion <- ssres + (2*p/n)*sigma_full
+        # sigma squared (which here I call sigma_full) full model
+        # sigma_full <- sum(residuals(fits[[6]])^2)/(164-6-1)
+        # sigma of 22 was in all boostrap replications pg 993 above table 1
+        sigma_full <- 22^2
+        ssres <- sapply(fits, function(i) { sum(i$residuals^2) }) 
+        criterion <- ssres + (2*p)*sigma_full
     }
     
     if (method=="GCV") {
@@ -111,36 +118,85 @@ fit.best <- function(j, method="AIC", K, REP, predict=0.771191592){
         criterion <- my.kfold(DF=DF, K=K, REP=REP, formulas=formulas)
     }
     
-    #fitted value for observation 
+    # fitted value for observation 
     muhat <- sapply(1:6,function(i) predict(fits[[i]], 
-                                            newdata=data.frame(x=obs, x2=obs^2, x3=obs^3,x4=obs^4, x5=obs^5,x6=obs^6)))
+                    newdata=data.frame(x=obs, x2=obs^2, x3=obs^3,x4=obs^4, 
+                                       x5=obs^5,x6=obs^6)))
     
+    # create data frame of results
     dat <- !is.na(dfCoefNum)
     dat <- data.frame(dat,criteria=criterion, muhat=muhat)
     
+    # which model gets selected
     v.min <- which(dat[,"criteria"]==min(dat[,"criteria"]))
     
-    
-    #y~ LINEAR
+    # label the model that gets selected
+    # y~ LINEAR
     m1 <- nrow(subset(dat[v.min,], x==T & x2==F & x3==F & x4==F & x5==F & x6==F))>0
-    #y~ QUADRATIC
+    # y~ QUADRATIC
     m2 <- nrow(subset(dat[v.min,], x==T & x2==T & x3==F & x4==F & x5==F & x6==F))>0
-    #y~ CUBIC
+    # y~ CUBIC
     m3 <- nrow(subset(dat[v.min,], x==T & x2==T & x3==T & x4==F & x5==F & x6==F))>0
-    #y~ QUARTIC
+    # y~ QUARTIC
     m4 <- nrow(subset(dat[v.min,], x==T & x2==T & x3==T & x4==T & x5==F & x6==F))>0
-    #y~ QUINIC
+    # y~ QUINIC
     m5 <- nrow(subset(dat[v.min,], x==T & x2==T & x3==T & x4==T & x5==T & x6==F))>0
-    #y~ SEXTIC
+    # y~ SEXTIC
     m6 <- nrow(subset(dat[v.min,], x==T & x2==T & x3==T & x4==T & x5==T & x6==T))>0
     
-    #muhat for chosen model
+    # muhat for chosen model
     muhat <- dat[v.min, "muhat"]
     
-    l <- list("m1" = m1,"m2" = m2,"m3" = m3,"m4" = m4,"m5" = m5,"m6" = m6, "muhat"=muhat)
+    l <- list("m1" = m1,"m2" = m2,"m3" = m3,"m4" = m4,"m5" = m5,"m6" = m6, 
+              "muhat"=muhat)
     return(l)
-    
 }
+
+# this function is used to get the numbers for Table 1 ----
+fit.once <- function(j, predict=-2.32316){
+    
+    obs <- predict
+    DF <- j
+    n <- nrow(DF)
+    y <- DF[,.(y)]
+    x <- DF[,.(x,x2,x3,x4,x5,x6)]
+
+    # 6 candidate models
+    formulas <- list("y~x", "y~x+x2", "y~x+x2+x3", "y~x+x2+x3+x4", 
+                     "y~x+x2+x3+x4+x5", "y~x+x2+x3+x4+x5+x6")
+    
+    # fit all candidate models
+    fits <- lapply(formulas, function(i) lm(as.formula(i),data=DF))
+    
+    # log likelihoods for the models, produces same result as logLik function 
+    # in R base (sapply(fits,logLik))
+    log.liks <- sapply(fits, function(i) 
+    { (-n/2)*log(sum(i$residuals^2)/n) - n/2 - (n/2)*log(2*pi)} )
+    
+    # coefficient values
+    dfCoefNum <- ldply(fits, function(x) as.data.frame( t(coef(x))))
+    
+    # number of coefficients per model including intercept
+    p <- apply(dfCoefNum, 1, function(i) sum(!is.na(i)))
+    
+    #selection criterion
+    sigma_full <- sapply(fits, function(i) car::sigmaHat(i)^2)
+    ssres <- sapply(fits, function(i) { sum(i$residuals^2) }) 
+    criterion <- ssres + (2*p)*sigma_full
+    
+    # fitted value for observation 
+    muhat <- sapply(1:6,function(i) predict(fits[[i]], 
+                                            newdata=data.frame(x=obs, x2=obs^2, x3=obs^3,x4=obs^4, 
+                                                               x5=obs^5,x6=obs^6)))
+    
+    # create data frame of results
+    dat <- !is.na(dfCoefNum)
+    dat <- data.frame(dat,criteria=criterion, muhat=muhat)
+    
+    return(dat)
+}
+
+
 
 # Evaluate center, length, coverage ----------------------------------------
 vals <- function(x,tstar, n.boot){
