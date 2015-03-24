@@ -177,11 +177,35 @@
 
 \section{Reproducing Numerical Results for Sections 1-4}
 
-<<setup, echo=FALSE,warning=FALSE,message=FALSE>>=
-library(knitr)
-library(data.table)
-#library(doParallel)
+<<packages,echo=FALSE,warning=FALSE,message=FALSE>>=
 setwd("~/git_repositories/math680/")
+pkgTest <- function(x)
+{
+    if (!require(x,character.only = TRUE))
+    {
+        install.packages(x,dep=TRUE)
+        if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+pkgTest("knitr")
+pkgTest("plyr")
+pkgTest("data.table")
+pkgTest("doParallel")
+pkgTest("foreach")
+pkgTest("bootstrap")
+pkgTest("splines")
+pkgTest("ggplot2")
+pkgTest("reshape2")
+pkgTest("car")
+pkgTest("grid")
+pkgTest("calibrate")
+pkgTest("xtable")
+registerDoParallel(cores = 4)
+source("multiplot.R")
+@
+
+
+<<setup, echo=FALSE,warning=FALSE,message=FALSE>>=
 options(width=70, digits=2)
 set.seed(45)
 opts_chunk$set(echo = FALSE, tidy = TRUE, autodep = TRUE)
@@ -211,17 +235,22 @@ read_chunk("section2.R")
 <<import-functions, echo=FALSE,warning=FALSE,message=FALSE>>=
 @
 
-<<bootstrap-samples>>=
+<<bootstrap-samples,cache=TRUE>>=
 @
 
-<<Cp-boot>>=
+<<Cp-boot,cache=TRUE>>=
 @
 
 <<Cp-original>>=
 @
 
 <<table1, results='asis',echo=FALSE>>=
-print(xtable(tab1),include.rownames=FALSE)
+print(xtable(tab1,caption = "$C_p$ model selection for the Cholesterol data. $\\sigma=22$ was used in all bootstrap replications. Last column shows percentage each model was selected as the $C_p$ minimizer, among $B = 4000$ bootstrap replications",align = c("l","l","c","c","c")),include.rownames=FALSE)
+@
+
+
+<<table2, results='asis',echo=FALSE>>=
+print(xtable(tab2, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model, 4000 nonparametric boostrap replications."))
 @
 
 <<figure-3,echo=FALSE,fig.cap='B=4000 bootstrap replications of the Cp-OLS regression estimate for Subject 1. Triangles indicate 2.5th and 97.5th percentiles of the histogram',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=

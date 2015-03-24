@@ -9,6 +9,8 @@
 rm(list=ls())
 
 # setwd("~/Biostats PhD/MATH680/Assignment 2/")
+# setwd("~/git_repositories/math680/")
+
 
 ## ---- import-functions ----
 source("functions.R")
@@ -25,10 +27,10 @@ obs <- -2.32316
 
 # Chosen models based on bootstrap replicates
 true.cp <- foreach(i = samples) %dopar% fit.best(i, method="CP", predict=obs)
-df.cp <- ldply (true.cp, data.frame)
+df.cp <- as.data.table(ldply(true.cp, data.frame))
 
 # how many times each model was chosen 
-perc.chosen <- apply(df.cp[,-7], 2, sum)/B
+perc.chosen <- apply(df.cp[,-7,with=FALSE], 2, sum)/B
 
 # percentile interval for bootstrap replicates (also used for Figure 3)
 ci.muhat <- data.frame(x=c(quantile(df.cp$muhat,c(0.025,0.975))[1],
@@ -43,7 +45,13 @@ muhat.obs <-fit.all[which.min(fit.all$criteria),"muhat"]
 # table 1 ----
 tab1 <- data.frame(model=c("Linear","Quadratic","Cubic","Quartic","Quintic",
                            "Sextic"),
-                   m=fit.all$p, Cp=fit.all$criteria, "Bootrap"=perc.chosen)
+                   m=fit.all$p, Cp=round(fit.all$criteria,0), "Bootrap"=perc.chosen)
+
+# table 2 ----
+tab2 <- data.frame(rbind(sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(mean(muhat),2)]),
+sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(sd(muhat),2)])))
+rownames(tab2) <- c("Mean","St.dev.")
+
 
 ## ---- figure-3 ----
 # histogram of 4000 muhat bootstrap estimates: Figure 3
