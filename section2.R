@@ -9,7 +9,6 @@
 rm(list=ls())
 
 # setwd("~/Biostats PhD/MATH680/Assignment 2/")
-setwd("~/Dropbox/Winter 2015/MATH680/Assignments/A2/")
 
 ## ---- import-functions ----
 source("functions.R")

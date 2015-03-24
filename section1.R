@@ -11,7 +11,6 @@
 # setwd("~/Biostats PhD/MATH680/Assignment 2/")
 
 ## ---- import-data ----
-setwd("~/Dropbox/Winter 2015/MATH680/Assignments/A2/")
 source("trans_choles_data.R")
 
 ## ---- hist-compliance ----

@@ -180,6 +180,8 @@
 <<setup, echo=FALSE,warning=FALSE,message=FALSE>>=
 library(knitr)
 library(data.table)
+#library(doParallel)
+setwd("~/git_repositories/math680/")
 options(width=70, digits=2)
 set.seed(45)
 opts_chunk$set(echo = FALSE, tidy = TRUE, autodep = TRUE)
@@ -209,13 +211,13 @@ read_chunk("section2.R")
 <<import-functions, echo=FALSE,warning=FALSE,message=FALSE>>=
 @
 
-<<bootstrap-samples, cache=TRUE>>=
+<<bootstrap-samples>>=
 @
 
-<<Cp-boot, cache=TRUE>>=
+<<Cp-boot>>=
 @
 
-<<Cp-original, cache=TRUE>>=
+<<Cp-original>>=
 @
 
 <<table1, results='asis',echo=FALSE>>=

@@ -6,18 +6,40 @@
 # NOTE: 
 ##################################
 
-library(plyr)
-library(data.table)
-library(doParallel)
-library(foreach)
-library(bootstrap)
-library(splines)
-library(ggplot2)
-library(reshape2)
-library(car)
-library(grid)
-library(calibrate)
-library(xtable)
+pkgTest <- function(x)
+{
+    if (!require(x,character.only = TRUE))
+    {
+        install.packages(x,dep=TRUE)
+        if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+
+pkgTest("plyr")
+pkgTest("data.table")
+pkgTest("doParallel")
+pkgTest("foreach")
+pkgTest("bootstrap")
+pkgTest("splines")
+pkgTest("ggplot2")
+pkgTest("reshape2")
+pkgTest("car")
+pkgTest("grid")
+pkgTest("calibrate")
+pkgTest("xtable")
+
+# library(plyr)
+# library(data.table)
+# library(doParallel)
+# library(foreach)
+# library(bootstrap)
+# library(splines)
+# library(ggplot2)
+# library(reshape2)
+# library(car)
+# library(grid)
+# library(calibrate)
+# library(xtable)
 registerDoParallel(cores = 4)
 source("multiplot.R")
 
@@ -177,7 +199,8 @@ fit.once <- function(j, predict=-2.32316){
     p <- apply(dfCoefNum, 1, function(i) sum(!is.na(i)))
     
     #selection criterion
-    sigma_full <- sapply(fits, function(i) car::sigmaHat(i)^2)
+    #sigma_full <- sapply(fits, function(i) car::sigmaHat(i)^2)
+    sigma_full <- 22
     ssres <- sapply(fits, function(i) { sum(i$residuals^2) }) 
     criterion <- ssres + (2*p)*sigma_full
     
