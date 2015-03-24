@@ -150,7 +150,8 @@ fit.best <- function(j, method="AIC", K, REP, predict=-2.32316){
     return(l)
 }
 
-# this function is used to get the numbers for Table 1 ----
+# this function is used to get the numbers for Table 1, it outputs a data.frame ----
+# with the Cp criteria for each model, as well as a predicted value based on the fitted model
 fit.once <- function(j, predict=-2.32316){
     
     obs <- predict
@@ -194,8 +195,6 @@ fit.once <- function(j, predict=-2.32316){
     return(dat)
 }
 
-
-
 # Evaluate center, length, coverage ----------------------------------------
 vals <- function(x,tstar, n.boot){
     #length
@@ -210,6 +209,46 @@ vals <- function(x,tstar, n.boot){
     return(data.frame(center=cen, length=len, coverage=cov))
 }
 
+#predicted values for SCAD, Lasso, and MCP penalties for prostate data set
+pred.penalty <- function(data, x, y, pred, n.lambda=200, penalty="lasso"){
+    
+    if(penalty=="lasso"){
+        cv.las <- cv.glmnet(x=as.matrix(x),y=y, nlambda=n.lambda, nfolds=5)
+        ans <- predict(cv.las, as.matrix(pred), s="lambda.min")
+    }
+    
+    #MCP penalty, need to use unstandardized, parameter gamma=3 for MCP
+    if(penalty=="MCP"){
+        cvfit <- cv.ncvreg(as.matrix(x),y, nlambda=n.lambda, nfolds=5, penalty="MCP")
+        ans <- predict(cvfit$fit,as.matrix(pred), lambda=cvfit$lambda.min)
+    }
+    
+    #gamma=3.7 for SCAD
+    if(penalty=="SCAD"){
+        cvfit <- cv.ncvreg(as.matrix(x),y, nlambda=n.lambda, nfolds=5, penalty="SCAD")
+        ans <- predict(cvfit$fit,as.matrix(pred), lambda=cvfit$lambda.min)
+    }
+    
+    if(penalty=="bic") {    
+        all <- regsubsets(as.formula(paste("log.psa ~", paste0(cov.names, collapse="+"), sep = "")), 
+                          data = data, nbest=10, really.big=T)
+        all.sum <- summary(all)
+        all.sum.which <- all.sum$which[which.min(all.sum$bic),]
+        fit <- lm(log.psa~.,data=data[,c(FALSE,all.sum.which)])
+        ans <- predict(fit,newdata=pred)
+    }
+    
+    if(penalty=="cp") {    
+        all <- leaps::regsubsets(as.formula(paste("y ~", paste0(cov.names, collapse="+"), sep = "")), 
+                          data = data, nbest=max(choose(6, 1:6)), really.big=T)
+        all.sum <- summary(all)
+        all.sum.which <- all.sum$which[which.min(all.sum$cp),]
+        fit <- lm(log.psa~.,data=data[,c(FALSE,all.sum.which)])
+        ans <- predict(fit,newdata=pred)
+    }
+    return(ans)
+}
+
 # calculates sdhat, sdsmooth, mutild, musmooth, quantiles CI for Lasso, MCP, SCAD, bic, cp, --------------
 # This function is for NON-PARAMETRIC BOOTSTRAP and works for prostate dataset
 fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
@@ -219,28 +258,30 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
     #B: number of bootstrap samples
     #penalty: SCAD, lasso, MCP, bic, cp
     
-    #data=prostate.s; x = prostate.s[,c(-1,-2)]; y=prostate.s[,2];pred=obs;single=TRUE;n.lambda=200;B=4000;penalty="bic"
+    #data=DT; x = DT[,.(x,x2,x3,x4,x5,x6)]; y=DT[,.(y)];pred=-2.32316;single=TRUE;B=4000;penalty="cp"
     ############################################################
     #x <- data[,c(-1,-8)]
     #y <- data[,1]
     n <- nrow(x)
+    #cov.names <- c("x","x2","x3","x4","x5","x6")
     
     if (single){
         
-        #model selection on original data
+        # model selection on original data
         # \hat{\mu} = t(y) , predict one observation
-        t.y <- pred.penalty(data=data, x=x, y=y, pred=pred, n.lambda=n.lambda, penalty=penalty)
+        #t.y <- pred.penalty(data=data, x=x, y=y, pred=pred, penalty=penalty)
+        mat.results <- fit.once(data, predict = pred)
+        t.y <- mat.results[which.min(mat.results$criteria),]$muhat
         
         # Bootstrap samples for simulation 
         samples.las <- replicate(B,data[sample(1:n,replace=T),],simplify=F)
         
         # t_i^*(y_i^*), i.e., the predicted values for 1 individual j for each 
         # bootstrap sample i=1,...,B, 
-        #need to change this code for different datasets
+        # need to change this code for different datasets
         tstar.i <- foreach(i = samples.las) %dopar% {
-            covariates <- i[,c(-1,-2)]
-            response <- i[,2]
-            pred.penalty(data=i, x=covariates, y=response, pred=pred, n.lambda=n.lambda, penalty=penalty)
+            mat.results <- fit.once(i, predict = pred)
+            mat.results[which.min(mat.results$criteria),]$muhat
         }
         tstar.i <- unlist(tstar.i)
         
@@ -252,7 +293,7 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
         
         # Standard interval ----
         stand.int <- t.y+qnorm(c(0.025, 0.975))*sd.hat
-        #center, length and coverage
+        # center, length and coverage
         m <- vals(stand.int, tstar.i, n.boot=B)
         
         # quantile interval
@@ -262,12 +303,12 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
         
         #smoothed interval    
         label <- seq(1,n+1, by=1) 
-        #how many times j appears in bootstrap sample i, j=1,..., 200
+        #how many times j appears in bootstrap sample i, j=1,..., 164
         y.ij <- foreach(i = samples.las) %dopar% as.data.frame(table(cut(i$label,label,include.highest = TRUE, right=FALSE)))[,2]
         #data.frame version of above, these are the Y_{ij}^{*}
         y.ij.star <- sapply(y.ij,cbind)
         
-        #how many times each observation j=1,...,200, showed up in bootstrap sample i=1,...,100
+        #how many times each observation j=1,...,164, showed up in bootstrap sample i=1,...,4000
         # y.j.star is Y__{\cdot j}^{*}, i.e.,  (1/n.boot) \sum_{i=1}^{n.boot} y_{ij}^*
         y.j.star <- apply(as.matrix(y.ij.star),1,sum)/B
         

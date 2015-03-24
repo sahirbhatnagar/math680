@@ -200,6 +200,7 @@ pkgTest("car")
 pkgTest("grid")
 pkgTest("calibrate")
 pkgTest("xtable")
+pkgTest("leaps")
 registerDoParallel(cores = 4)
 source("multiplot.R")
 @
