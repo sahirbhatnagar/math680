@@ -48,4 +48,11 @@ DT <- transform(DT, x2=x^2, x3=x^3, x4=x^4, x5=x^5, x6=x^6)
 # round the compliances to 5 digits, so that we can find the 11 subjects for Figure 5
 DT[,x:=round(x,5)]
 
+# need to add a label to each data point. This is used in the calculation of 
+# Efron's smoothed standard error estimate, i.e., we need to know how many
+# times each subject appears in the bootstrap sample
+DT[,label:=seq_along(1:nrow(DT))]
+
+
+
 
