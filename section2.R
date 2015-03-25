@@ -22,7 +22,8 @@ samples <- replicate(B,DT[sample(1:nrow(DT),replace=T),],simplify=F)
 ## ---- Cp-boot ----
 source("functions.R")
 
-obs <- -2.32316
+#obs <- -2.32316
+obs <- -2.25093
 
 # Chosen models based on bootstrap replicates
 true.cp <- foreach(i = samples) %dopar% fit.best(i, method="CP", predict=obs)

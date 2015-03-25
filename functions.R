@@ -55,7 +55,7 @@ my.kfold <- function(DF, K=5, REP=5, formulas) {
 }
 
 # this function works for the compliance dataset ----
-fit.best <- function(j, method="AIC", K, REP, predict=-2.32316){
+fit.best <- function(j, method="AIC", K, REP, predict=-2.25093){
     
     obs <- predict
     DF <- j
@@ -152,7 +152,7 @@ fit.best <- function(j, method="AIC", K, REP, predict=-2.32316){
 
 # this function is used to get the numbers for Table 1, it outputs a data.frame ----
 # with the Cp criteria for each model, as well as a predicted value based on the fitted model
-fit.once <- function(j, predict=-2.32316){
+fit.once <- function(j, predict=-2.25093){
     
     obs <- predict
     DF <- j
