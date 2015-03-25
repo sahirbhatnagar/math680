@@ -11,8 +11,8 @@
 # setwd("~/Biostats PhD/MATH680/Assignment 2/")
 # setwd("~/git_repositories/math680/")
 
-source("functions.R")
-source("trans_choles_data.R")
+#source("functions.R")
+#source("trans_choles_data.R")
 
 ## ---- bootstrap-samples ----
 B <- 4000

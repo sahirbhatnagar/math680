@@ -20,12 +20,12 @@
 # B <- 4000
 # samples <- replicate(B,DT[sample(1:nrow(DT),replace=T),],simplify=F)
 
-# ---- Cp-boot ----
 # Compliance for observation 1
 #obs <- -2.32316
 
 
 ## ---- table-3 ----
+source("functions.R")
 jj <- fit.all(data=DT,pred=obs,bootsamples = samples, B=4000)
 
 #plot conf.intervals
