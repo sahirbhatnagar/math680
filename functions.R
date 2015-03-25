@@ -209,60 +209,21 @@ vals <- function(x,tstar, n.boot){
     return(data.frame(center=cen, length=len, coverage=cov))
 }
 
-#predicted values for SCAD, Lasso, and MCP penalties for prostate data set
-pred.penalty <- function(data, x, y, pred, n.lambda=200, penalty="lasso"){
-    
-    if(penalty=="lasso"){
-        cv.las <- cv.glmnet(x=as.matrix(x),y=y, nlambda=n.lambda, nfolds=5)
-        ans <- predict(cv.las, as.matrix(pred), s="lambda.min")
-    }
-    
-    #MCP penalty, need to use unstandardized, parameter gamma=3 for MCP
-    if(penalty=="MCP"){
-        cvfit <- cv.ncvreg(as.matrix(x),y, nlambda=n.lambda, nfolds=5, penalty="MCP")
-        ans <- predict(cvfit$fit,as.matrix(pred), lambda=cvfit$lambda.min)
-    }
-    
-    #gamma=3.7 for SCAD
-    if(penalty=="SCAD"){
-        cvfit <- cv.ncvreg(as.matrix(x),y, nlambda=n.lambda, nfolds=5, penalty="SCAD")
-        ans <- predict(cvfit$fit,as.matrix(pred), lambda=cvfit$lambda.min)
-    }
-    
-    if(penalty=="bic") {    
-        all <- regsubsets(as.formula(paste("log.psa ~", paste0(cov.names, collapse="+"), sep = "")), 
-                          data = data, nbest=10, really.big=T)
-        all.sum <- summary(all)
-        all.sum.which <- all.sum$which[which.min(all.sum$bic),]
-        fit <- lm(log.psa~.,data=data[,c(FALSE,all.sum.which)])
-        ans <- predict(fit,newdata=pred)
-    }
-    
-    if(penalty=="cp") {    
-        all <- leaps::regsubsets(as.formula(paste("y ~", paste0(cov.names, collapse="+"), sep = "")), 
-                          data = data, nbest=max(choose(6, 1:6)), really.big=T)
-        all.sum <- summary(all)
-        all.sum.which <- all.sum$which[which.min(all.sum$cp),]
-        fit <- lm(log.psa~.,data=data[,c(FALSE,all.sum.which)])
-        ans <- predict(fit,newdata=pred)
-    }
-    return(ans)
-}
-
 # calculates sdhat, sdsmooth, mutild, musmooth, quantiles CI for Lasso, MCP, SCAD, bic, cp, --------------
 # This function is for NON-PARAMETRIC BOOTSTRAP and works for prostate dataset
-fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
+fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
     #single: if TRUE then predicts single observation, else predicts fitted values for all j=1,...,n
     #pred: data frame of observation that you want to predict
     #n.lambda: number of lambdas to test for tuning parameter in lasso
     #B: number of bootstrap samples
+    # bootsamples: bootstrap sample
     #penalty: SCAD, lasso, MCP, bic, cp
     
-    #data=DT; x = DT[,.(x,x2,x3,x4,x5,x6)]; y=DT[,.(y)];pred=-2.32316;single=TRUE;B=4000;penalty="cp"
+    #data=DT; pred=-2.32316;single=TRUE;B=4000;bootsamples=samples
     ############################################################
     #x <- data[,c(-1,-8)]
     #y <- data[,1]
-    n <- nrow(x)
+    n <- nrow(data)
     #cov.names <- c("x","x2","x3","x4","x5","x6")
     
     if (single){
@@ -273,13 +234,10 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
         mat.results <- fit.once(data, predict = pred)
         t.y <- mat.results[which.min(mat.results$criteria),]$muhat
         
-        # Bootstrap samples for simulation 
-        samples.las <- replicate(B,data[sample(1:n,replace=T),],simplify=F)
-        
         # t_i^*(y_i^*), i.e., the predicted values for 1 individual j for each 
         # bootstrap sample i=1,...,B, 
         # need to change this code for different datasets
-        tstar.i <- foreach(i = samples.las) %dopar% {
+        tstar.i <- foreach(i = bootsamples) %dopar% {
             mat.results <- fit.once(i, predict = pred)
             mat.results[which.min(mat.results$criteria),]$muhat
         }
@@ -298,13 +256,13 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
         
         # quantile interval
         quantile.int <- quantile(tstar.i, probs=c(0.025,0.975))
-        jjj <- as.data.frame(vals(quantile.int, tstar.i, n.boot=B))
+        quantile.result <- as.data.frame(vals(quantile.int, tstar.i, n.boot=B))
         quantile.int <- data.frame(quantile.int)
         
         #smoothed interval    
         label <- seq(1,n+1, by=1) 
         #how many times j appears in bootstrap sample i, j=1,..., 164
-        y.ij <- foreach(i = samples.las) %dopar% as.data.frame(table(cut(i$label,label,include.highest = TRUE, right=FALSE)))[,2]
+        y.ij <- foreach(i = bootsamples) %dopar% as.data.frame(table(cut(i$label,label,include.highest = TRUE, right=FALSE)))[,2]
         #data.frame version of above, these are the Y_{ij}^{*}
         y.ij.star <- sapply(y.ij,cbind)
         
@@ -327,13 +285,13 @@ fit.all <- function(data, x, y, pred , single, n.lambda, B, penalty) {
         
         #smoothed interval
         smooth.int <- mutilde+qnorm(c(0.025,0.975))*sd.tilde 
-        k <- vals(smooth.int, tstar.i, n.boot=B)
+        smooth.result <- vals(smooth.int, tstar.i, n.boot=B)
         
         
         result <- data.frame(muhat=t.y,mutilde=mutilde,sdhat=sd.hat, sdtilde=sd.tilde,  
                              tstar.i=tstar.i, l.stand=stand.int[1], u.stand=stand.int[2], m,
-                             l.quant=quantile.int[1,], u.quant=quantile.int[2,],jjj,
-                             l.smooth=smooth.int[1], u.smooth=smooth.int[2], k)
+                             l.quant=quantile.int[1,], u.quant=quantile.int[2,],quantile.result,
+                             l.smooth=smooth.int[1], u.smooth=smooth.int[2], smooth.result)
         
         
     } else { 

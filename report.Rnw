@@ -203,14 +203,14 @@ pkgTest("xtable")
 pkgTest("leaps")
 registerDoParallel(cores = 4)
 source("multiplot.R")
+source("functions.R")
 @
 
 
-<<setup, echo=FALSE,warning=FALSE,message=FALSE>>=
+<<setup, echo=FALSE,warning=FALSE,message=FALSE,cache=FALSE>>=
 options(width=70, digits=2)
 set.seed(45)
-opts_chunk$set(echo = FALSE, tidy = TRUE, autodep = TRUE)
-dep_auto()
+opts_chunk$set(echo = FALSE, tidy = TRUE)
 opts_template$set(
     fig.large = list(fig.width = 8, fig.height = 6, fig.align = 'center'),
     fig.small = list(fig.width = 3.5, fig.height = 3, fig.align = 'center')
@@ -218,6 +218,8 @@ opts_template$set(
 knit_hooks$set(crop = hook_pdfcrop)
 read_chunk("section1.R")
 read_chunk("section2.R")
+read_chunk("section3.R")
+knitr:::knit_code$get()
 @
 
 \subsection{Introduction}
@@ -233,13 +235,10 @@ read_chunk("section2.R")
 
 \subsection{Nonparametric Bootstrap Smoothing}
 
-<<import-functions, echo=FALSE,warning=FALSE,message=FALSE>>=
+<<bootstrap-samples>>=
 @
 
-<<bootstrap-samples,cache=TRUE>>=
-@
-
-<<Cp-boot,cache=TRUE>>=
+<<Cp-boot>>=
 @
 
 <<Cp-original>>=
@@ -260,6 +259,11 @@ print(xtable(tab2, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ a
 
 
 \subsection{Accuracy of the Smoothed Bootstrap Estimates}
+
+<<table-3, results='asis', echo=FALSE>>=
+print(xtable(p.conf,digits = 2, caption = 'Three approximate 95\\% bootstrap confidence intervals 
+             for $\\mu_1$, the response for Subject 1, Cholesterol data'),include.rownames=FALSE)
+@
 
 
 

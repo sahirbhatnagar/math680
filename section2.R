@@ -6,15 +6,13 @@
 # NOTE: 
 ##################################
 
-rm(list=ls())
+# rm(list=ls())
 
 # setwd("~/Biostats PhD/MATH680/Assignment 2/")
 # setwd("~/git_repositories/math680/")
 
-
-## ---- import-functions ----
 source("functions.R")
-#source("trans_choles_data.R")
+source("trans_choles_data.R")
 
 ## ---- bootstrap-samples ----
 B <- 4000
@@ -22,7 +20,8 @@ samples <- replicate(B,DT[sample(1:nrow(DT),replace=T),],simplify=F)
 
 
 ## ---- Cp-boot ----
-# Compliance for observation 1
+source("functions.R")
+
 obs <- -2.32316
 
 # Chosen models based on bootstrap replicates
