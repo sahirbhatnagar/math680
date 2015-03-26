@@ -26,7 +26,7 @@ source("functions.R")
 obs <- -2.25093
 
 # Chosen models based on bootstrap replicates
-true.cp <- foreach(i = samples) %dopar% fit.best(i, method="CP", predict=obs)
+true.cp <- foreach(i = samples, .packages = c("data.table", "plyr")) %dopar% fit.best(i, method="CP", predict=obs)
 df.cp <- as.data.table(ldply(true.cp, data.frame))
 
 # how many times each model was chosen 
@@ -45,7 +45,7 @@ muhat.obs <-fit.all[which.min(fit.all$criteria),"muhat"]
 # table 1 ----
 tab1 <- data.frame(model=c("Linear","Quadratic","Cubic","Quartic","Quintic",
                            "Sextic"),
-                   m=fit.all$p, Cp=round(fit.all$criteria,0), "Bootrap"=perc.chosen)
+                   m=fit.all$p, Cp=round(fit.all$criteria,0), "Bootstrap"=perc.chosen)
 
 # table 2 ----
 tab2 <- data.frame(rbind(sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(mean(muhat),2)]),
@@ -59,4 +59,4 @@ ggplot(df.cp, aes(muhat)) + geom_histogram(binwidth=1, colour="black", fill="whi
     geom_vline(xintercept = muhat.obs, colour="red", linetype = "longdash",size=1.5)+
     annotate("text", label = round(muhat.obs,2), x = 5, y = -7, size = 5, colour = "red")+
     geom_point(data=ci.muhat, aes(x,y), size=4,shape=24, fill="red")+
-    xlab("bootstrap estimates for subject 1")
+    xlab("bootstrap estimates for subject 1") + ylab("Frequency")

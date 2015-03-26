@@ -237,7 +237,8 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
         # t_i^*(y_i^*), i.e., the predicted values for 1 individual j for each 
         # bootstrap sample i=1,...,B, 
         # need to change this code for different datasets
-        tstar.i <- foreach(i = bootsamples) %dopar% {
+        tstar.i <- foreach(i = bootsamples, .export = "fit.once", 
+                           .packages=c("data.table", "plyr")) %dopar% {
             mat.results <- fit.once(i, predict = pred)
             mat.results[which.min(mat.results$criteria),]$muhat
         }
