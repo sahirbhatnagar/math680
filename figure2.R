@@ -14,5 +14,5 @@ obs <- DT[i,x]
 source("functions.R")
 jj <- fit.all(data=DT,pred=obs, bootsamples = samples, B=B)
 
-write.table(c(obs, jj), file=paste0("results", i, ".txt"), 
+write.table(cbind(obs, jj), file=paste0("results", i, ".txt"), 
             row.names=FALSE, col.names=FALSE)
