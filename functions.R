@@ -306,7 +306,7 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
         
         
         result <- data.frame(muhat=t.y, mutilde=mutilde, sdhat=sd.hat, sdtilde=sd.tilde,  
-                             l.stand=stand.int[1], u.stand=stand.int[2], m,
+                             l.stand=stand.int[1], u.stand=stand.int[2], m, sdbar=mat.results$se.bar,
                              l.quant=quantile.int[1,], u.quant=quantile.int[2,],quantile.result,
                              l.smooth=smooth.int[1], u.smooth=smooth.int[2], smooth.result)
         
