@@ -45,12 +45,29 @@ muhat.obs <-fit.all[which.min(fit.all$criteria),"muhat"]
 # table 1 ----
 tab1 <- data.frame(model=c("Linear","Quadratic","Cubic","Quartic","Quintic",
                            "Sextic"),
-                   m=fit.all$p, Cp=round(fit.all$criteria,0), "Bootstrap"=perc.chosen)
+                   m=fit.all$p, Cp=round(fit.all$criteria,0)-80000, "Bootstrap"=round(perc.chosen*100))
 
 # table 2 ----
 tab2 <- data.frame(rbind(sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(mean(muhat),2)]),
 sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(sd(muhat),2)])))
 rownames(tab2) <- c("Mean","St.dev.")
+
+#some bootstrap samples that led to the sextic model
+#being selected give a terrible fit: 25, 675, 757, 1567, 2191, 2414, 3716
+#same thing for those that led to quintic model: 1538, 2778, 3096, 3315, 3417
+
+#removing them and recomputing table 2 shows that the discrepancy
+#between our table 2 and Efron's is due to bootstrap variability
+tab21 <- data.frame(rbind(sapply(paste0("m",1:6), 
+                                 function(i){
+                                     df.cp[-c(25,675,757,1567,2191,2414,
+                                              3716,1538,2778,3096,3315,3417)][which(get(i)),
+                                                                              round(mean(muhat),2)]}),
+                         sapply(paste0("m",1:6), 
+                                function(i){
+                                    df.cp[-c(25,675,757,1567,2191,2414,
+                                             3716,1538,2778,3096,3315,3417)][which(get(i)),
+                                                                             round(sd(muhat),2)]})))
 
 
 ## ---- figure-3 ----

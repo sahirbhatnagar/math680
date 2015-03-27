@@ -21,8 +21,8 @@ hist(DT$x, xlab="transformed compliance", main="Histogram of transformed complia
 #DT[x %in% subjects.comp]
 
 ## ---- figure-1 ----
-subjects.comp <- c(-2.32316, -1.37117, -0.82660, -0.54559,-0.22347,-0.00764,0.24705, 
-                   0.53688 ,0.74428, 1.28329, 2.06079) 
+subjects.comp <- c(-2.2509, -1.37117, -0.82660, -0.54559,-0.22347,-0.00764,0.24705, 
+                   0.53688 ,0.74428, 1.28329, 1.9705) 
 
 fit <- lm(y ~ x + x2 + x3, data=DT)
 new.comp <- with(DT, seq(min(x),max(x), length.out=1000))
@@ -34,9 +34,6 @@ abline(h=0, lty=2)
 calibrate::textxy(subjects.comp, rep(-45,length(subjects.comp)), 
                   labs = seq_along(1:length(subjects.comp)), cex = 0.8)
 for (k in seq_along(1:length(subjects.comp))) abline(v=subjects.comp[k], lty=2)
-points(-2.32316,11.50, pch=19, col="red")
+points(-2.2509,11.50, pch=19, col="red")
 arrows(-2.1,35,-2.25,15, angle=15)
 calibrate::textxy(-2.0,36,labs = 1, cex=1)
-
-
-

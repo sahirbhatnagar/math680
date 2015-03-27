@@ -18,6 +18,7 @@ library(car)
 library(grid)
 library(calibrate)
 library(xtable)
+#library(glmnet)
 registerDoParallel(cores = 4)
 
 
@@ -152,7 +153,7 @@ fit.best <- function(j, method="AIC", K, REP, predict=-2.25093){
 
 # this function is used to get the numbers for Table 1, it outputs a data.frame ----
 # with the Cp criteria for each model, as well as a predicted value based on the fitted model
-fit.once <- function(j, predict=-2.25093){
+fit.once <- function(j, predict=-2.25093, single=TRUE){
     
     obs <- predict
     DF <- j
@@ -183,20 +184,34 @@ fit.once <- function(j, predict=-2.25093){
     ssres <- sapply(fits, function(i) { sum(i$residuals^2) }) 
     criterion <- ssres + (2*p)*sigma_full
     
-    # fitted value for observation 
-    muhat <- sapply(1:6,function(i) predict(fits[[i]], 
-                                            newdata=data.frame(x=obs, x2=obs^2, x3=obs^3,x4=obs^4, 
-                                                               x5=obs^5,x6=obs^6)))
+    #SE under given model
+    se.model <- sapply(fits, function(i) summary(i)$sigma)
     
-    # create data frame of results
-    dat <- !is.na(dfCoefNum)
-    dat <- data.frame(dat,criteria=criterion, muhat=muhat, p=p)
+    # fitted value for observation 
+    if(single){
+        muhat <- sapply(1:6,function(i) predict(fits[[i]], 
+                                                newdata=data.frame(x=obs, x2=obs^2, x3=obs^3,x4=obs^4, 
+                                                                   x5=obs^5,x6=obs^6)))
+        # create data frame of results
+        dat <- !is.na(dfCoefNum)
+        dat <- data.frame(dat,criteria=criterion, muhat=muhat, se.bar=se.model, p=p)
+        
+    }else{
+        dat <- foreach(l = obs) %dopar% {
+            muhat <- sapply(1:6,function(i){
+                predict(fits[[i]],
+                        newdata=data.frame(x=l, x2=l^2, x3=l^3,x4=l^4,
+                                           x5=l^5,x6=l^6))
+            })
+        data.frame(!is.na(dfCoefNum),criteria=criterion, muhat=muhat, se.bar=se.model, p=p)
+        }
+    }
     
     return(dat)
 }
 
 # Evaluate center, length, coverage ----------------------------------------
-vals <- function(x,tstar, n.boot){
+vals <- function(x, tstar, n.boot){
     #length
     len <- abs(x[2]-x[1])
     #center
@@ -221,8 +236,8 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
     
     #data=DT; pred=-2.32316;single=TRUE;B=4000;bootsamples=samples
     ############################################################
-    #x <- data[,c(-1,-8)]
-    #y <- data[,1]
+    x <- data[,c(-1,-8), with=FALSE]
+    y <- data[,y]
     n <- nrow(data)
     #cov.names <- c("x","x2","x3","x4","x5","x6")
     
@@ -233,16 +248,17 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
         #t.y <- pred.penalty(data=data, x=x, y=y, pred=pred, penalty=penalty)
         mat.results <- fit.once(data, predict = pred)
         t.y <- mat.results[which.min(mat.results$criteria),]$muhat
+        #se.bar <- mat.results[which.min(mat.results$criteria),]$se.bar
         
         # t_i^*(y_i^*), i.e., the predicted values for 1 individual j for each 
         # bootstrap sample i=1,...,B, 
         # need to change this code for different datasets
-        tstar.i <- foreach(i = bootsamples, .export = "fit.once", 
-                           .packages=c("data.table", "plyr")) %dopar% {
+        tstar.i <- foreach(i = bootsamples, .export = "fit.once",
+                           .packages=c("data.table", "plyr"), .combine=c) %dopar% {
             mat.results <- fit.once(i, predict = pred)
             mat.results[which.min(mat.results$criteria),]$muhat
         }
-        tstar.i <- unlist(tstar.i)
+        #tstar.i <- unlist(tstar.i)
         
         # s(y) = B^{-1} \sumn t_i^*(y_i^*) for one j
         # this is the mean for one predicted value across each bootstrap sample, i.e. , the mutilde
@@ -289,42 +305,113 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
         smooth.result <- vals(smooth.int, tstar.i, n.boot=B)
         
         
-        result <- data.frame(muhat=t.y,mutilde=mutilde,sdhat=sd.hat, sdtilde=sd.tilde,  
-                             tstar.i=tstar.i, l.stand=stand.int[1], u.stand=stand.int[2], m,
+        result <- data.frame(muhat=t.y, mutilde=mutilde, sdhat=sd.hat, sdtilde=sd.tilde,  
+                             l.stand=stand.int[1], u.stand=stand.int[2], m,
                              l.quant=quantile.int[1,], u.quant=quantile.int[2,],quantile.result,
                              l.smooth=smooth.int[1], u.smooth=smooth.int[2], smooth.result)
         
         
     } else { 
         
-        #model selection on original data
-        fit.las <- cv.glmnet(x=as.matrix(x),y=y, nlambda=n.lambda, nfolds=5)
+#         #model selection on original data
+#         fit.las <- cv.glmnet(x=as.matrix(x),y=y, nfolds=5)
+#         
+#         # \hat{\mu} = t(y) , predict everyone
+#         t.y <- predict(fit.las,as.matrix(pred), s="lambda.min")
+#         
+#         # Bootstrap samples for simulation 
+#         samples.las <- replicate(B,data[sample(1:nrow(data),replace=T),],simplify=F)
+#         
+#         # t_i^*(y_i^*), i.e., the predicted values for each individual j=1,...,n, for each 
+#         # bootstrap sample i=1,...,B, so we have 200 predicted values for each bootstrap sample.
+#         tstar.i <- foreach(i = samples.las, .combine='cbind') %dopar% pred.las(i, pred, n.lam=n.lambda)
+#         
+#         # s(y) = B^{-1} \sumn t_i^*(y_i^*) for each j=1,...,n
+#         # this is the mean for each predicted value across each bootstrap sample
+#         s.y.j <- apply(tstar.i,1,mean)
+#         # \hat{sd_B}, the standard bootstrap standard error
+#         sd.hat <- apply(tstar.i,1,sd)
+#         
+#         # Standard interval ----
+#         stand.int <- cbind(t.y+qnorm(0.025)*sd.hat,t.y+qnorm(0.975)*sd.hat)
+#         #center, length and coverage
+#         
+#         m <- lapply(1:n, function(j) vals(stand.int[j,], tstar.i[j,], n.boot=B))
+#         result <- ldply (m, data.frame)
+#         result <- transform(result.stand, muhat=t.y, mutilde=s.y.j, sdhat=sd.hat, lower=stand.int[,1], upper=stand.int[,2])
+         
+        # model selection on original data
+        # \hat{\mu} = t(y) , predict one observation
+        #t.y <- pred.penalty(data=data, x=x, y=y, pred=pred, penalty=penalty)
+        mat.results <- fit.once(data, predict = pred, single=FALSE)
+        t.y <- sapply(mat.results, function(i) i[which.min(i$criteria),]$muhat)
+        #se.bar <- mat.results[which.min(mat.results$criteria),]$se.bar
         
-        # \hat{\mu} = t(y) , predict everyone
-        t.y <- predict(fit.las,as.matrix(pred), s="lambda.min")
+        # t_i^*(y_i^*), i.e., the predicted values for 1 individual j for each 
+        # bootstrap sample i=1,...,B, 
+        # need to change this code for different datasets
+        tstar.i <- foreach(i = bootsamples, .export = "fit.once",
+                           .packages=c("data.table", "plyr", "foreach")) %dopar% {
+                               mat.results <- fit.once(i, predict = pred, single=FALSE)
+                               sapply(mat.results, function(l) l[which.min(l$criteria),]$muhat)
+                           }
+        tstar.i <- matrix(unlist(tstar.i), byrow=TRUE, nrow=length(bootsamples))
         
-        # Bootstrap samples for simulation 
-        samples.las <- replicate(B,data[sample(1:nrow(data),replace=T),],simplify=F)
-        
-        # t_i^*(y_i^*), i.e., the predicted values for each individual j=1,...,n, for each 
-        # bootstrap sample i=1,...,B, so we have 200 predicted values for each bootstrap sample.
-        tstar.i <- foreach(i = samples.las, .combine='cbind') %dopar% pred.las(i, pred, n.lam=n.lambda)
-        
-        # s(y) = B^{-1} \sumn t_i^*(y_i^*) for each j=1,...,n
-        # this is the mean for each predicted value across each bootstrap sample
-        s.y.j <- apply(tstar.i,1,mean)
+        # s(y) = B^{-1} \sumn t_i^*(y_i^*) for one j
+        # this is the mean for one predicted value across each bootstrap sample, i.e. , the mutilde
+        mutilde <- apply(tstar.i, 2, mean)
         # \hat{sd_B}, the standard bootstrap standard error
-        sd.hat <- apply(tstar.i,1,sd)
+        sd.hat <- apply(tstar.i, 2, sd)
         
         # Standard interval ----
-        stand.int <- cbind(t.y+qnorm(0.025)*sd.hat,t.y+qnorm(0.975)*sd.hat)
-        #center, length and coverage
+        stand.int <- cbind(t.y+qnorm(0.025)*sd.hat, t.y+qnorm(0.975)*sd.hat)
+        # center, length and coverage
+        m <- foreach(i = 1:nrow(stand.int), .combine = rbind,
+                     .export="vals") %dopar% vals(stand.int[i,], tstar.i[,i], n.boot=B)
         
-        m <- lapply(1:n, function(j) vals(stand.int[j,], tstar.i[j,], n.boot=B))
-        result <- ldply (m, data.frame)
-        result <- transform(result.stand, muhat=t.y, mutilde=s.y.j, sdhat=sd.hat, lower=stand.int[,1], upper=stand.int[,2])
+        # quantile interval
+        quantile.int <- t(apply(tstar.i, 2, quantile, probs=c(0.025,0.975)))
+        quantile.result <- foreach(i = 1:nrow(quantile.int), .combine = rbind,
+                                   .export="vals") %dopar% vals(quantile.int[i,], tstar.i[,i], n.boot=B)
+        #quantile.int <- data.frame(quantile.int)
         
-    }
+        #smoothed interval    
+        label <- seq(1,n+1, by=1) 
+        #how many times j appears in bootstrap sample i, j=1,..., 164
+        y.ij <- foreach(i = bootsamples) %dopar% as.data.frame(table(cut(i$label,label,include.highest = TRUE, right=FALSE)))[,2]
+        #data.frame version of above, these are the Y_{ij}^{*}
+        y.ij.star <- sapply(y.ij,cbind)
+        
+        #how many times each observation j=1,...,164, showed up in bootstrap sample i=1,...,4000
+        # y.j.star is Y__{\cdot j}^{*}, i.e.,  (1/n.boot) \sum_{i=1}^{n.boot} y_{ij}^*
+        y.j.star <- apply(as.matrix(y.ij.star),1,sum)/B
+        
+        sd.tilde <- foreach(l = 1:ncol(tstar.i), .combine = c) %dopar% {
+
+        covj <- rep(NA,n)
+        
+        for (j in 1:n){
+            temp = 0
+            for (i in 1:B){
+                temp <- temp + (y.ij.star[j,i]-y.j.star[j])*(tstar.i[i,l]-mutilde[l])
+            }
+            covj[j] <- temp/B
+        }
+        
+        #\tilde{sd_B} smoothed standard deviation
+        sqrt(sum(covj^2))
+        }
+        
+        #smoothed interval
+        smooth.int <- cbind(mutilde+qnorm(0.025)*sd.tilde, mutilde+qnorm(0.975)*sd.tilde) 
+        smooth.result <- foreach(i = 1:nrow(smooth.int), .export="vals",
+                                 .combine = rbind) %dopar% vals(smooth.int[i,], tstar.i[,i], n.boot=B)        
+        
+        result <- data.frame(muhat=t.y, mutilde=mutilde, sdhat=sd.hat, sdtilde=sd.tilde,  
+                             l.stand=stand.int[1,], u.stand=stand.int[2,], m,
+                             l.quant=quantile.int[1,], u.quant=quantile.int[2,],quantile.result,
+                             l.smooth=smooth.int[1,], u.smooth=smooth.int[2,], smooth.result)
+            }
     
     return(result)
     
