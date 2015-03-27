@@ -41,14 +41,29 @@ p.conf <- rbind(p1,p2,p3)
  
 ## ---- figure-2 ----
 
-JJ <- fit.all(data=DT, pred=DT[,x], bootsamples = samples, B=4000, single=FALSE)
-se.bar <- summary(lm(y ~ x + x2 + x3, data=DT))$sigma
+# JJ <- fit.all(data=DT, pred=DT[,x], bootsamples = samples, B=4000, single=FALSE)
+# se.bar <- summary(lm(y ~ x + x2 + x3, data=DT))$sigma
 
-plot(x=DT[,x], y=JJ$sdtilde/JJ$sdhat, ylim=c(0,1), 
+JJ <- read.table("figure2data", 
+                 quote="\"", stringsAsFactors=FALSE)
+colnames(JJ) <- c("compliance", "muhat", "mutilde", "sdhat", "sdtilde", "l.stand", "u.stand", "center", "length", "coverage", 
+                  "sdbar", "l.quant", "u.quant", "center.1", "length.1", "coverage.1", "l.smooth", "u.smooth", 
+                  "center.2", "length.2", "coverage.2")
+c.vec <- function(c) c(1, c, c^2, c^3)
+
+SEbar <- foreach(i = 1:nrow(JJ), .combine=c) %do% {
+    sqrt(JJ$sdbar[i]^2 * t(c.vec(JJ$compliance[i])) %*% 
+                  solve(t(as.matrix(X[,list(int,x,x2,x3)])) %*% 
+                            as.matrix(X[,list(int,x,x2,x3)])) %*% 
+                  c.vec(JJ$compliance[i]))
+}
+
+plot(x=JJ$compliance, y=JJ$sdtilde/JJ$sdhat, ylim=c(0,1.6), 
+     col='red', pch=19, cex=0.6, xlab="adjusted compliance",
+     ylab="stdev ratio")
+lines(lowess(data.frame(x=JJ$compliance, y=JJ$sdtilde/JJ$sdhat)),
+      col='red')
+points(x=JJ$compliance, y=JJ$sdtilde/SEbar, 
      col='blue', pch=19, cex=0.6)
-
-ggplot(as.data.frame(x=DT[,x], y=JJ$sdtilde/JJ$sdhat), aes(x,y)) + geom_point(colour="red", fill="white") +
-    geom_point(data = as.data.frame(x=DT[,x], y=JJ$sdhat/se.bar), aes(x,y) colour="blue", fill="white") + 
-    geom_vline(xintercept = 0, colour="black", linetype = "longdash", size=1.5) + 
-    geom_hline(yintercept = 1, colour = "black") + geom_hline(yintercept = 0, colour="black", linetype = "longdash") +
-    xlab("adjusted compliance") + ylab("stdev ratio")
+abline(h=c(1,0), lty=c(1,2), lwd=c(2,1))
+abline(v=0, lty=2)
