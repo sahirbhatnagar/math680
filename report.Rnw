@@ -382,6 +382,9 @@ LASSO & standard & 3.62 & 0.31 & 1.21 & 0.94 \\
    & smooth & 0.64 & 4.40 & 17.24 & 0.97 \LL
 }
 
+Wang, Sherwood and Li also show that when the columns of the predictor matrix are orthogonal and $C_p$, AIC or BIC are used as model selection criteria, an analytical solution to the asymptotic variance of the smoothed estimator can be derived . With a numerical example, they show that Efron's estimator performs well in this setting. Professor Politis points out that 
+the proposed estimator does not apply to the residual bootstrap because this presupposes a choice of the model. He then gives a summary of his own work on model-free prediction as an alternative approach. Gupta and Lahiri give show two alternative methods for constructing confidence intervals; the Adaptive LASSO~\citep{zou} and maximum frequency Bootstrap-$t$ (MF). The Adaptive LASSO has the oracle property, i.e., it performs as well as if the true underlying model were given in advance and has been shown. The maximum frequency Bootstrap-$t$ limits the calculation of the bagged estimator and its standard error to those resamples that led to the most chosen model. While Gupta and Lahiri's simulations show good performance of this approach, it does not do well in the cholesterol example;  MF 95\% CI [-5.93,15.35] compared to the smoothed interval [-13.3, 8.0]. This is because a substantial number of bootstrap resamples, which led to more negative predicted values are being ignored by the MF.  
+
 
 \newpage
 
