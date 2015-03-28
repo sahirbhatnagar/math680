@@ -68,7 +68,7 @@ tab21 <- data.frame(rbind(sapply(paste0("m",1:6),
                                     df.cp[-c(25,675,757,1567,2191,2414,
                                              3716,1538,2778,3096,3315,3417)][which(get(i)),
                                                                              round(sd(muhat),2)]})))
-
+rownames(tab21) <- c("Mean","St.dev.")
 
 ## ---- figure-3 ----
 # histogram of 4000 muhat bootstrap estimates: Figure 3

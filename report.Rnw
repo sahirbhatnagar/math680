@@ -175,7 +175,7 @@
 %Here is our abstract.  We have taken the ideas from \citet{WuLange2008}, and coded them up.
 %\end{abstract}
 
-\section{Reproducing Numerical Results for Sections 1-4}
+\section{Numerical Results}
 
 <<packages,echo=FALSE,warning=FALSE,message=FALSE>>=
 setwd("~/git_repositories/math680/")
@@ -219,6 +219,7 @@ knit_hooks$set(crop = hook_pdfcrop)
 read_chunk("section1.R")
 read_chunk("section2.R")
 read_chunk("section3.R")
+read_chunk("discussion_sy.R")
 #knitr:::knit_code$get()
 @
 
@@ -227,7 +228,7 @@ read_chunk("section3.R")
 <<import-data, echo=FALSE,warning=FALSE,message=FALSE>>=
 @
 
-<<hist-compliance,echo=FALSE,fig.cap='Histogram of copmliance values after transformation, so that it looks like a standard normal distribution',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+<<hist-compliance,echo=FALSE,fig.cap='Histogram of copmliance values after transformation, so that it looks like a standard normal distribution',fig.align='center',opts.label = 'fig.large', crop = TRUE, eval=FALSE>>=
 @
 
 <<figure-1,echo=FALSE,fig.cap='Choleterol decrease vs. compliance with cubic regression fitted curve',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
@@ -245,13 +246,19 @@ read_chunk("section3.R")
 @
 
 <<table1, results='asis',echo=FALSE>>=
-print(xtable(tab1,caption = "$C_p$ model selection for the Cholesterol data. $\\sigma=22$ was used in all bootstrap replications. Last column shows percentage each model was selected as the $C_p$ minimizer, among $B = 4000$ bootstrap replications",align = c("l","l","c","c","c")),include.rownames=FALSE)
+print(xtable(tab1,digits=0,caption = "$C_p$ model selection for the Cholesterol data. $\\sigma=22$ was used in all bootstrap replications. Last column shows percentage each model was selected as the $C_p$ minimizer, among $B = 4000$ bootstrap replications",align = c("l","l","c","c","c")),include.rownames=FALSE)
 @
 
 
 <<table2, results='asis',echo=FALSE>>=
 print(xtable(tab2, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model, 4000 nonparametric boostrap replications."))
 @
+
+<<table21, results='asis',echo=FALSE,warning=FALSE,message=FALSE>>=
+print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model. Some bootstrap samples that led to the quintic and sextic model being selected give a bad fit. Removing them and recomputing table 2 shows that the discrepancy between our table 2 and Efron's is due to bootstrap variability."))
+@
+
+
 
 <<figure-3,echo=FALSE,fig.cap='B=4000 bootstrap replications of the Cp-OLS regression estimate for Subject 1. Triangles indicate 2.5th and 97.5th percentiles of the histogram',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
 @
@@ -273,6 +280,17 @@ print(xtable(p.conf,digits = 2, caption = 'Three approximate 95\\% bootstrap con
 
 
 \subsection{Parametric Bootstrap Smoothing}
+
+
+
+\section{Discussion}
+
+
+<<discussion-1,echo=FALSE,fig.cap='Fitted values for subject 1, from B=4000 nonparametric bootsrap replications separated by three most frequently chosen models by Cp',fig.align='center',opts.label = 'fig.large', crop = TRUE, warning=FALSE, message=FALSE>>=
+@
+
+
+
 
 
 
