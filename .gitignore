@@ -27,4 +27,6 @@
 cache/*
 *.tex
 figure/*
-report.pdf
+Efron*
+JASA*
+Math680*

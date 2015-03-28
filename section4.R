@@ -16,15 +16,18 @@
 # only import functions and data to test this Rscript..
 # comment out when compiling Rnw because these have been previously called
 # library(MASS)
-source("functions.R")
-source("trans_choles_data.R")
+#source("functions.R")
+#source("trans_choles_data.R")
 
+## ---- figure-5 ----
 subjects.comp <- c(-2.25093, -1.36986, -0.82647, -0.54556,-0.22347,-0.00764,0.24704, 
                    0.53672, 0.74327, 1.27808, 1.97051) 
 id.unord <- match(subjects.comp, round(DT[,x], 5))
 id.ord <- match(subjects.comp, round(sort(DT[,x]), 5))
 
-X <- cbind(1, as.matrix(DT[,-c(1,ncol(DT)), with=FALSE]))
+#X <- cbind(1, as.matrix(DT[,-c(1,ncol(DT)), with=FALSE]))
+
+X <- model.matrix(~x+x2+x3+x4+x5+x6,data=DT )
 
 #Sigma depends on compliance
 
@@ -49,25 +52,14 @@ Ystarstar.ij <- foreach(i = 1:100, .packages="MASS") %dopar% {
     mvrnorm(n = 1000, mu = muHatStar.i[,i], Sigma = Sigma.mat)
 }
 
-par.bs <- lapply(Ystarstar.ij, param)
+par.bs <- foreach(i = seq_along(1:length(Ystarstar.ij))) %dopar% {param(Ystarstar.ij[[i]])}
 
 mu.smooth <- sapply(par.bs, function(l) l[,1])
 sd.smooth <- sapply(par.bs, function(l) l[,2])
 
-#Figure 5 with all subjects
-plot(x=1, y=1, type='n', ylim=c(0,2), xlim=c(min(DT[,x]), max(DT[,x])),
-     xlab="adjusted compliance", ylab="standard deviation estimates")
-for(i in 1:100) points(x=DT[,x], y=sd.smooth[,i], pch='-', cex=0.7)
-lines(x=DT[,x][order(DT[,x])], 
-      y=apply(sd.smooth, 1, mean)[order(DT[,x])], lty=2, 
-      col='blue', type='b', pch=19)
-lines(x=DT[,x][order(DT[,x])], 
-      y=apply(mu.smooth, 1, sd)[order(DT[,x])],
-      col='red', lwd=2)
-
 #Figure 5 with selected subjects
 plot(x=1, y=1, type='n', ylim=c(0,2), xlim=c(min(DT[,x]), max(DT[,x])),
-     xlab="adjusted compliance", ylab="standard deviation estimates")
+     xlab="adjusted compliance, subjects 1 through 11", ylab="standard deviation estimates")
 for(i in 1:100) points(x=DT[,x][id.unord], y=sd.smooth[id.unord,i], 
                        pch='-', cex=0.7)
 lines(x=DT[,x][order(DT[,x])][id.ord], 
@@ -76,3 +68,5 @@ lines(x=DT[,x][order(DT[,x])][id.ord],
 lines(x=DT[,x][order(DT[,x])][id.ord], 
       y=apply(mu.smooth, 1, sd)[order(DT[,x])][id.ord],
       col='red', lwd=2)
+calibrate::textxy(DT[,x][id.unord], rep(0.05,length(DT[,x][id.unord])), 
+                  labs = seq_along(1:length(DT[,x][id.unord])), cex = 0.8)

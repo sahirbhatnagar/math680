@@ -222,6 +222,7 @@ knit_hooks$set(crop = hook_pdfcrop)
 read_chunk("section1.R")
 read_chunk("section2.R")
 read_chunk("section3.R")
+read_chunk("section4.R")
 read_chunk("discussion_sy.R")
 #knitr:::knit_code$get()
 @
@@ -272,6 +273,8 @@ print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ 
 <<discussion-1,echo=FALSE,fig.cap='Fitted values for subject 1, from B=4000 nonparametric bootsrap replications separated by three most frequently chosen models by Cp',fig.align='center',opts.label = 'fig.large', crop = TRUE, warning=FALSE, message=FALSE>>=
 @
 
+
+
 \subsection{Accuracy of the Smoothed Bootstrap Estimates}
 
 <<table-3,echo=FALSE,warning=FALSE, cache=TRUE>>=
@@ -288,6 +291,8 @@ print(xtable(p.conf,digits = 2, caption = 'Three approximate 95\\% bootstrap con
 
 \subsection{Parametric Bootstrap Smoothing}
 
+<<figure-5,echo=FALSE,fig.cap='Simulation test of Theorem 2. Cholesterol data; 100 simulations, 1000 parametric bootstraps each, for the 11 subjects indicated at the bottom of Figure 1',fig.align='center',opts.label = 'fig.large', crop = TRUE, cache=TRUE>>=
+@
 
 
 \section{Discussion}
