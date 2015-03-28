@@ -49,12 +49,13 @@ JJ <- read.table("figure2data",
 colnames(JJ) <- c("compliance", "muhat", "mutilde", "sdhat", "sdtilde", "l.stand", "u.stand", "center", "length", "coverage", 
                   "sdbar", "l.quant", "u.quant", "center.1", "length.1", "coverage.1", "l.smooth", "u.smooth", 
                   "center.2", "length.2", "coverage.2")
+
+X <- cbind(1, as.matrix(DT[, list(x, x2, x3)]))
 c.vec <- function(c) c(1, c, c^2, c^3)
 
 SEbar <- foreach(i = 1:nrow(JJ), .combine=c) %do% {
     sqrt(JJ$sdbar[i]^2 * t(c.vec(JJ$compliance[i])) %*% 
-                  solve(t(as.matrix(X[,list(int,x,x2,x3)])) %*% 
-                            as.matrix(X[,list(int,x,x2,x3)])) %*% 
+                  solve(t(X) %*% X) %*% 
                   c.vec(JJ$compliance[i]))
 }
 
