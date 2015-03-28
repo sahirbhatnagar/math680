@@ -18,6 +18,7 @@ library(car)
 library(grid)
 library(calibrate)
 library(xtable)
+library(MASS)
 #library(glmnet)
 registerDoParallel(cores = 4)
 
@@ -415,4 +416,37 @@ fit.all <- function(data, pred , bootsamples, single = TRUE, B, penalty) {
     
     return(result)
     
+}
+
+#parametric bootstrap----
+
+param <- function(data){
+    
+    #compute beta
+    betaStar.i <- apply(data, 1, function(row){
+        solve(G) %*% t(X) %*% solve(Sigma.mat) %*% row
+    })
+    betaStar.i <- t(betaStar.i)
+    
+    betaStar.mean <- apply(betaStar.i, 2, mean)
+    B.mat <- apply(betaStar.i, 1, function(row) row - betaStar.mean)
+    B.mat <- t(B.mat)
+    
+    #compute smoothed estimate
+    muHat.i <- apply(betaStar.i, 1, function(row) X %*% row)
+    muTilde.i <- apply(muHat.i, 1, mean)
+    
+    #empirical covariance
+    cov.hat <- foreach(i = 1:164) %dopar% {
+        t(B.mat) %*% (muHat.i[i,]-muTilde.i[i])/1000
+    }
+    
+    #empirical bs variance
+    V.bar <- t(B.mat) %*% B.mat/1000
+    
+    sd.tilde <- sapply(cov.hat, function(cov){
+        sqrt(t(cov) %*% solve(V.bar) %*% cov)
+    })
+    
+    return(cbind(muTilde.i, sd.tilde))
 }
