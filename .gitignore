@@ -1,7 +1,6 @@
 .Rproj.user
 .Rhistory
 .RData
-*.pdf
 *.aux
 *.glo
 *.idx
@@ -27,3 +26,5 @@
 *.synctex.gz
 cache/*
 *.tex
+figure/*
+report.pdf
