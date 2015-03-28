@@ -13,6 +13,9 @@
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \usepackage{comment}
+\usepackage[round]{natbib}   % omit 'round' option if you prefer square brackets
+\bibliographystyle{plainnat}
+\usepackage{placeins}
 \usepackage{epstopdf}
 \usepackage{setspace} %Spacing
 \usepackage{graphicx,graphics}
@@ -212,7 +215,7 @@ options(width=70, digits=2)
 set.seed(45)
 opts_chunk$set(echo = FALSE, tidy = TRUE, cache = FALSE)
 opts_template$set(
-    fig.large = list(fig.width = 8, fig.height = 6, fig.align = 'center'),
+    fig.large = list(fig.width = 7, fig.height = 5, fig.align = 'center'),
     fig.small = list(fig.width = 3.5, fig.height = 3, fig.align = 'center')
 )
 knit_hooks$set(crop = hook_pdfcrop)
@@ -239,7 +242,7 @@ read_chunk("discussion_sy.R")
 <<bootstrap-samples>>=
 @
 
-<<Cp-boot>>=
+<<Cp-boot, cache=TRUE>>=
 @
 
 <<Cp-original>>=
@@ -259,15 +262,19 @@ print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ 
 @
 
 
+<<figure-2,echo=FALSE,fig.cap='Solid points: ratio of standard deviations, taking account of model selection or not, for the 164 values $\\hat{\\mu}_j$ from the regression curve in Figure 1. Dashed line: ratio of $\\tilde{sd}_B$ to $\\hat{sd}_B$',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+@
+
 
 <<figure-3,echo=FALSE,fig.cap='B=4000 bootstrap replications of the Cp-OLS regression estimate for Subject 1. Triangles indicate 2.5th and 97.5th percentiles of the histogram',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
 @
 
-
+<<discussion-1,echo=FALSE,fig.cap='Fitted values for subject 1, from B=4000 nonparametric bootsrap replications separated by three most frequently chosen models by Cp',fig.align='center',opts.label = 'fig.large', crop = TRUE, warning=FALSE, message=FALSE>>=
+@
 
 \subsection{Accuracy of the Smoothed Bootstrap Estimates}
 
-<<table-3,echo=FALSE,warning=FALSE>>=
+<<table-3,echo=FALSE,warning=FALSE, cache=TRUE>>=
 @
 
 
@@ -285,12 +292,96 @@ print(xtable(p.conf,digits = 2, caption = 'Three approximate 95\\% bootstrap con
 
 \section{Discussion}
 
+The main example in this paper was based on all subset selection in a linear regression context. The discussion by Wang, Sherwood and Li investigate the proposed method in a regularization procedure, a GLM, quantile and nonparametric regression. Overall, their numerical examples show that Efron's proposed smoothed estimator results in more accurate confidence intervals with good coverage probabilities. The rationale behind using $L_1$-norm type penalty functions for model selection as opposed to the all subset method used by Efron, is due to the well known result that all subset selection methods are unstable~\citep{breiman1996}. Since these model selection procedures are driven by the data, it has been shown that even changing one point from the learning set, can result in a completely different chosen model~\citep{breimanmachine}.
 
-<<discussion-1,echo=FALSE,fig.cap='Fitted values for subject 1, from B=4000 nonparametric bootsrap replications separated by three most frequently chosen models by Cp',fig.align='center',opts.label = 'fig.large', crop = TRUE, warning=FALSE, message=FALSE>>=
-@
+We performed a similar analysis on the \texttt{prostate} data set~\citep{prostate}; a study that examined the relation between level of prostate specific antigen (PSA) and eight clinical measures e.g. Gleason score, cancer volume, prostate weight in 97 men who were about to receive prostatectomy. We produced $B=4000$ bootstrap samples of the \texttt{prostate} data set. For each of the bootstrap samples, we performed model selection using all subset selection as well as LASSO~\citep{Tibshirani94regressionshrinkage}, SCAD~\cite{fanli} and MCP~\cite{zhang2010}. For each model selection procedure, we calculated the fitted value for observation 95 based on the chosen model (resulting in 4000 fitted values for each of the 5 procedures). All the analysis was performed in \texttt{R}~\citep{rcore}. The LASSO was implemented using the \texttt{glmnet} package~\citep{friedmanjstat}. SCAD and MCP were implemented using the coordinate descent algorithm in the \texttt{ncvreg} package~\citep{breheny}. The tuning parameter $\lambda$ was chosen using 5 fold cross validation. Note, for the SCAD and MCP penalties, which have an additional tuning parameter, we used the suggested value of $3.7$ and $3.0$, respectively. All subset selection via the BIC and Cp criterion were implemented using the \texttt{leaps} package~\citep{leaps}. The histograms for the fitted values are given in Figure~\ref{fig:proshist}.   
+
+\begin{figure}[h]
+        \centering
+        \begin{subfigure}[b]{0.5\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{./mcp_scad_las_hist}
+                \caption{$L_1$-Norm Penalty Functions}
+                \label{fig:proshist1}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.5\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{./bic_cp_hist}
+                \caption{All Subset Selection}
+                \label{fig:proshist2}
+        \end{subfigure}
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+          %(or a blank line to force the subfigure onto a new line)
+        %\begin{subfigure}[b]{0.3\textwidth}
+        %        \centering
+        %        \includegraphics[width=\textwidth]{mouse}
+        %        \caption{A mouse}
+        %        \label{fig:mouse}
+        %\end{subfigure}
+        \caption{Histogram of fitted values for subject 95 based on 4000 Bootstrap samples for the \texttt{prostate} data set}\label{fig:proshist}
+\end{figure}
+\FloatBarrier
+Figure~\ref{fig:proshist2} confirms the work of~\cite{breiman1996}, i.e., the all subset selection procedure is very sensitive to changes in the data. The LASSO, SCAD and MCP all produce much more stable estimates, with the distributions of the fitted values looking normal and centred around their mean (Figure~\ref{fig:proshist1}).\\
+
+Figure~\ref{fig:prosconf} compares the lengths of the three confidence intervals types for each procedure. We see that the new smoothed confidence intervals, based on the proposed smoothed standard deviation $\widehat{sd}_B$, outperforms (is shorter) the standard and quantile confidence intervals across all model selection procedures, with the LASSO providing the smallest intervals. Table~\ref{tab:prostab} provides the numerical values of our analysis. Again, we see that the $L_1$-Norm penalties all perform similarly, with good coverage probabilities. Although the coverage probabilities are reasonable for the all subset methods, the length of the interval is much wider. 
+
+\begin{figure}[h]
+        \centering
+        \begin{subfigure}[b]{0.5\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{./ci_penalty}
+                \caption{$L_1$-Norm Penalty Functions}
+                \label{fig:prosconf1}
+        \end{subfigure}%
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.5\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{./ci_penalty_bic}
+                \caption{All Subset Selection}
+                \label{fig:prosconf2}
+        \end{subfigure}
+        ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+          %(or a blank line to force the subfigure onto a new line)
+        %\begin{subfigure}[b]{0.3\textwidth}
+        %        \centering
+        %        \includegraphics[width=\textwidth]{mouse}
+        %        \caption{A mouse}
+        %        \label{fig:mouse}
+        %\end{subfigure}
+        \caption{Length of confidence intervals for $\hat{\mu}_{95}$ based on 4000 Bootstrap samples for the \texttt{prostate} data set}\label{fig:prosconf}
+\end{figure}
 
 
 
+\ctable[caption={Prostate data, B=4000, Observation 95},label=tab:prostab,pos=h!, doinside=\normalsize]{lcccccccc}{}
+{
+															\FL
+model & type & fitted value & sd & length & coverage \ML
+LASSO & standard & 3.62 & 0.31 & 1.21 & 0.94 \\ 
+   & quantile &  &  & 1.20 & 0.95 \\ 
+   & smooth & 3.57 & 0.29 & 1.14 & 0.93 \ML
+  SCAD & standard & 3.60 & 0.35 & 1.37 & 0.95 \\ 
+   & quantile &  &  & 1.33 & 0.95 \\ 
+   & smooth & 3.62 & 0.33 & 1.28 & 0.93 \ML
+  MCP & standard & 3.60 & 0.35 & 1.38 & 0.96 \\ 
+   & quantile &  &  & 1.35 & 0.95 \\ 
+   & smooth & 3.61 & 0.33 & 1.29 & 0.94 \ML
+  BIC & standard & 5.50 & 4.75 & 18.62 & 0.84 \\ 
+   & quantile &  &  & 16.05 & 0.95 \\ 
+   & smooth & 3.22 & 3.46 & 13.55 & 0.83 \ML 
+  Cp & standard & 5.13 & 5.11 & 20.02 & 0.86 \\ 
+   & quantile &  &  & 16.15 & 0.95 \\ 
+   & smooth & 0.64 & 4.40 & 17.24 & 0.97 \LL
+}
+
+
+\newpage
+
+\FloatBarrier
+\bibliography{report}
 
 
 
