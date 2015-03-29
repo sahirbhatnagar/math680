@@ -173,6 +173,14 @@
 \affil{Department of Epidemiology, Biostatistics and Occupational Health \\ McGill University}
 %\date{}
 \maketitle
+\thispagestyle{empty}
+
+M~Turgeon reproduced Figures 1, 2, and 5. S~Bhatnagar reproduced Tables 1, 2, and 3, as well as Figure~3.
+
+M~Turgeon summarized Sections 5, 6, and 7, as well as Gelman's \& Vehtari's comment and the Rejoinder. S~Bhatnagar summarized the other comments.
+
+\clearpage
+\setcounter{page}{1}
 
 %\begin{abstract}
 %Here is our abstract.  We have taken the ideas from \citet{WuLange2008}, and coded them up.
@@ -181,7 +189,7 @@
 \section{Numerical Results}
 
 <<packages,echo=FALSE,warning=FALSE,message=FALSE>>=
-setwd("~/git_repositories/math680/")
+#setwd("~/git_repositories/math680/")
 pkgTest <- function(x)
 {
     if (!require(x,character.only = TRUE))
@@ -227,16 +235,22 @@ read_chunk("discussion_sy.R")
 #knitr:::knit_code$get()
 @
 
+We attempted to reproduce the numerical computations that were performed in the first four sections of Efron's 2014 JASA article. 
+
 \subsection{Introduction}
+
+\FloatBarrier
 
 <<import-data, echo=FALSE,warning=FALSE,message=FALSE>>=
 @
 
-<<hist-compliance,echo=FALSE,fig.cap='Histogram of copmliance values after transformation, so that it looks like a standard normal distribution',fig.align='center',opts.label = 'fig.large', crop = TRUE, eval=FALSE>>=
+<<hist-compliance,echo=FALSE,fig.cap='Histogram of compliance values after transformation, so that it looks like a standard normal distribution',fig.align='center',opts.label = 'fig.large', crop = TRUE, eval=FALSE>>=
 @
 
 <<figure-1,echo=FALSE,fig.cap='Choleterol decrease vs. compliance with cubic regression fitted curve',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
 @
+
+The compliance measures were transformed to make them closer to a standard normal random variables. It involved a rank transformation. Using these values, we fitted a cubic regression of compliance on cholesterol decrease. In Figure~\ref{fig:figure-1}, we have a scatterplot of the data, and the regression curve has been added to it.
 
 \subsection{Nonparametric Bootstrap Smoothing}
 
@@ -250,20 +264,23 @@ read_chunk("discussion_sy.R")
 @
 
 <<table1, results='asis',echo=FALSE>>=
-print(xtable(tab1,digits=0,caption = "$C_p$ model selection for the Cholesterol data. $\\sigma=22$ was used in all bootstrap replications. Last column shows percentage each model was selected as the $C_p$ minimizer, among $B = 4000$ bootstrap replications",align = c("l","l","c","c","c")),include.rownames=FALSE)
+print(xtable(tab1,digits=0,caption = "$C_p$ model selection for the Cholesterol data. $\\sigma=22$ was used in all bootstrap replications. Last column shows percentage each model was selected as the $C_p$ minimizer, among $B = 4000$ bootstrap replications",align = c("l","l","c","c","c")),include.rownames=FALSE, label="tab:table1")
 @
 
 
 <<table2, results='asis',echo=FALSE>>=
-print(xtable(tab2, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model, 4000 nonparametric boostrap replications."))
+print(xtable(tab2, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model, 4000 nonparametric boostrap replications.", label="tab:table2"))
 @
 
 <<table21, results='asis',echo=FALSE,warning=FALSE,message=FALSE>>=
-print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model. Some bootstrap samples that led to the quintic and sextic model being selected give a bad fit. Removing them and recomputing table 2 shows that the discrepancy between our table 2 and Efron's is due to bootstrap variability."))
+print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ as a function of the selected model. Some bootstrap samples that led to the quintic and sextic model being selected give a bad fit. Removing them and recomputing table 2 shows that the discrepancy between our table 2 and Efron's is due to bootstrap variability.", label="tab:table21"))
 @
 
+In Table~\ref{tab:table1}, we have computed the $C_p$ statistic for each model, showing that the cubic model indeed provides the lowest value. We also performed model selection for each of $B=4000$ bootstrap resamples, and recorded which model was selected. The last column shows what proportion of resamples led to a given model being selected.
 
-<<figure-2,echo=FALSE,fig.cap='Solid points: ratio of standard deviations, taking account of model selection or not, for the 164 values $\\hat{\\mu}_j$ from the regression curve in Figure 1. Dashed line: ratio of $\\tilde{sd}_B$ to $\\hat{sd}_B$',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
+In Table~\ref{tab:table2}, we have the mean and standard deviation of the bootstrap estimates, as a function of the selected model. Our values for the quintic and sextic models are wuite far from Efron's results. This is due to some bootstrap samples leading to especially bad fits. When removing some samples that where quite far from the overall mean, we can more or less recreate Efron's results (see Table~\ref{tab:table21}). In any case, we remark that different models lead to very different values of the bootstrap estimates. This is also apparent in Figure~\ref{fig:discussion-1}, where we have plotted the histogram of the bootstrap estimates corresponding to the three models being selected the most often: linear, cubic, and quartic. The discrete nature of our search through the collection of models creates these separate histograms, and therefore leads to the ``jumpiness'' nature of the estimator. The overall histogram of the bootstrap estimates appears in Figure~\ref{fig:figure-3}.
+
+<<figure-2,echo=FALSE,fig.cap='Blue points: ratio of standard deviations, taking account of model selection or not, for the 164 values $\\hat{\\mu}_j$ from the regression curve in Figure 1. Red points: ratio of $\\tilde{sd}_B$ to $\\hat{sd}_B$',fig.align='center',opts.label = 'fig.large', crop = TRUE>>=
 @
 
 
@@ -284,22 +301,31 @@ print(xtable(tab21, caption = "Mean and standard deviation of $\\hat{\\mu}_1^*$ 
 
 <<results='asis', echo=FALSE>>=
 print(xtable(p.conf,digits = 2, caption = 'Three approximate 95\\% bootstrap confidence intervals 
-             for $\\mu_1$, the response for Subject 1, Cholesterol data'),include.rownames=FALSE)
+             for $\\mu_1$, the response for Subject 1, Cholesterol data'),include.rownames=FALSE, label="tab:table-3")
 @
 
-
+Using Theorem~1, we can now compute the standard deviation of the smoothed bootstrap estimator and therefore construct confidence intervals. The comparison of three different construction is given in Table~\ref{tab:table-3}. In Figure~\ref{fig:figure-2}, we have a comparison of the smoothed vs. non-smoothed standard deviations (red dots), as well as a comparison of the smoothed standard deviation and the one coming from assuming that the cubic model is the correct one (blue dots). Our results here are different from Efron's: the median of the blue dots is \Sexpr{median(JJ$sdtilde/JJ$sdhat)}, but the median of the red dots is only \Sexpr{median(JJ$sdtilde/SEbar)}. 
 
 \subsection{Parametric Bootstrap Smoothing}
 
 <<figure-5,echo=FALSE,fig.cap='Simulation test of Theorem 2. Cholesterol data; 100 simulations, 1000 parametric bootstraps each, for the 11 subjects indicated at the bottom of Figure 1',fig.align='center',opts.label = 'fig.large', crop = TRUE, cache=TRUE>>=
 @
 
+In Section~4, Efron explains how the smoothed bootstrap can be extended to the parametric setting. The main results is Theorem~2, in which he derives the standard deviation of the estimator. Figure~\ref{fig:figure-5} shows the results of a simulation test that tries to recreate the results of Theorem~2, by comparing the proposed expression for the standard deviation to its empirical counterpart. Again, our results are slightly different from Efron's: the overall shape of the curve is reproduced, but the $y$-scale is different, with smaller standard deviations than Efron.
+
+\subsection{Section 5, 6, and 7}
+
+Section 5 discusses another example of parametric bootstrap. Efron uses a different dataset: the response is the absolute magnitude for 39 Type 1a supernovae, along with their spectral energies measured at 10 different frequencies. 
+
+Section 6 looks at improving the bootstrap confidence intervals: the idea is to increase the convergence rate of the coverage probabilities from $\sqrt{n}$ to $n$, where $n$ is the sample size. Efron proposes to do this using the ABC system (proposed by DiCiccio and Efron), which corrects the smoothed confidence interval on three levels: (1) non-normality correction, (2) acceleration correction, and (3) bias correction. This methodology can be used in the context of an ``empirical exponential family''.
+
+Finally, section 7 is a collection of various proofs and remarks about the previous sections. Of particular interest is a discussion on how to estimate the bias of the smoother estimates. 
 
 \section{Discussion}
 
-The main example in this paper was based on all subset selection in a linear regression context. The discussion by Wang, Sherwood and Li investigate the proposed method in a regularization procedure, a GLM, quantile and nonparametric regression. Overall, their numerical examples show that Efron's proposed smoothed estimator results in more accurate confidence intervals with good coverage probabilities. The rationale behind using $L_1$-norm type penalty functions for model selection as opposed to the all subset method used by Efron, is due to the well known result that all subset selection methods are unstable~\citep{breiman1996}. Since these model selection procedures are driven by the data, it has been shown that even changing one point from the learning set, can result in a completely different chosen model~\citep{breimanmachine}.
+The main example in this paper was based on all subset selection in a linear regression context. The discussion by Wang, Sherwood and Li investigates the proposed method in a regularization procedure, a GLM, quantile and nonparametric regression. Overall, their numerical examples show that Efron's proposed smoothed estimator results in more accurate confidence intervals with good coverage probabilities. The rationale behind using $L_1$-norm type penalty functions for model selection as opposed to the all subset method used by Efron, is due to the well known result that all subset selection methods are unstable~\citep{breiman1996}. Since these model selection procedures are driven by the data, it has been shown that even changing one point from the learning set, can result in a completely different chosen model~\citep{breimanmachine}.
 
-We performed a similar analysis on the \texttt{prostate} data set~\citep{prostate}; a study that examined the relation between level of prostate specific antigen (PSA) and eight clinical measures e.g. Gleason score, cancer volume, prostate weight in 97 men who were about to receive prostatectomy. We produced $B=4000$ bootstrap samples of the \texttt{prostate} data set. For each of the bootstrap samples, we performed model selection using all subset selection as well as LASSO~\citep{Tibshirani94regressionshrinkage}, SCAD~\cite{fanli} and MCP~\cite{zhang2010}. For each model selection procedure, we calculated the fitted value for observation 95 based on the chosen model (resulting in 4000 fitted values for each of the 5 procedures). All the analysis was performed in \texttt{R}~\citep{rcore}. The LASSO was implemented using the \texttt{glmnet} package~\citep{friedmanjstat}. SCAD and MCP were implemented using the coordinate descent algorithm in the \texttt{ncvreg} package~\citep{breheny}. The tuning parameter $\lambda$ was chosen using 5 fold cross validation. Note, for the SCAD and MCP penalties, which have an additional tuning parameter, we used the suggested value of $3.7$ and $3.0$, respectively. All subset selection via the BIC and Cp criterion were implemented using the \texttt{leaps} package~\citep{leaps}. The histograms for the fitted values are given in Figure~\ref{fig:proshist}.   
+We performed a similar analysis on the \texttt{prostate} data set~\citep{prostate}; a study that examined the relation between level of prostate specific antigen (PSA) and eight clinical measures (e.g. Gleason score, cancer volume, prostate weight) in 97 men who were about to receive prostatectomy. We produced $B=4000$ bootstrap samples of the \texttt{prostate} data set. For each of the bootstrap samples, we performed model selection using all subset selection as well as LASSO~\citep{Tibshirani94regressionshrinkage}, SCAD~\cite{fanli} and MCP~\cite{zhang2010}. For each model selection procedure, we calculated the fitted value for observation 95 based on the chosen model (resulting in 4000 fitted values for each of the 5 procedures). All the analysis was performed in \texttt{R}~\citep{rcore}. The LASSO was implemented using the \texttt{glmnet} package~\citep{friedmanjstat}. SCAD and MCP were implemented using the coordinate descent algorithm in the \texttt{ncvreg} package~\citep{breheny}. The tuning parameter $\lambda$ was chosen using 5 fold cross validation. Note, for the SCAD and MCP penalties, which have an additional tuning parameter, we used the suggested value of $3.7$ and $3.0$, respectively. All subset selection via the BIC and Cp criterion were implemented using the \texttt{leaps} package~\citep{leaps}. The histograms for the fitted values are given in Figure~\ref{fig:proshist}.   
 
 \begin{figure}[h]
         \centering
@@ -330,7 +356,7 @@ We performed a similar analysis on the \texttt{prostate} data set~\citep{prostat
 \FloatBarrier
 Figure~\ref{fig:proshist2} confirms the work of~\cite{breiman1996}, i.e., the all subset selection procedure is very sensitive to changes in the data. The LASSO, SCAD and MCP all produce much more stable estimates, with the distributions of the fitted values looking normal and centred around their mean (Figure~\ref{fig:proshist1}).\\
 
-Figure~\ref{fig:prosconf} compares the lengths of the three confidence intervals types for each procedure. We see that the new smoothed confidence intervals, based on the proposed smoothed standard deviation $\widehat{sd}_B$, outperforms (is shorter) the standard and quantile confidence intervals across all model selection procedures, with the LASSO providing the smallest intervals. Table~\ref{tab:prostab} provides the numerical values of our analysis. Again, we see that the $L_1$-Norm penalties all perform similarly, with good coverage probabilities. Although the coverage probabilities are reasonable for the all subset methods, the length of the interval is much wider. 
+Figure~\ref{fig:prosconf} compares the lengths of the three confidence intervals types for each procedure. We see that the new smoothed confidence intervals, based on the proposed smoothed standard deviation $\widehat{sd}_B$, outperforms (i.e. is shorter than) the standard and quantile confidence intervals across all model selection procedures, with the LASSO providing the smallest intervals. Table~\ref{tab:prostab} provides the numerical values of our analysis. Again, we see that the $L_1$-Norm penalties all perform similarly, with good coverage probabilities. Although the coverage probabilities are reasonable for the all subset methods, the length of the interval is much wider. 
 
 \begin{figure}[h]
         \centering
@@ -383,7 +409,11 @@ LASSO & standard & 3.62 & 0.31 & 1.21 & 0.94 \\
 }
 
 Wang, Sherwood and Li also show that when the columns of the predictor matrix are orthogonal and $C_p$, AIC or BIC are used as model selection criteria, an analytical solution to the asymptotic variance of the smoothed estimator can be derived . With a numerical example, they show that Efron's estimator performs well in this setting. Professor Politis points out that 
-the proposed estimator does not apply to the residual bootstrap because this presupposes a choice of the model. He then gives a summary of his own work on model-free prediction as an alternative approach. Gupta and Lahiri give show two alternative methods for constructing confidence intervals; the Adaptive LASSO~\citep{zou} and maximum frequency Bootstrap-$t$ (MF). The Adaptive LASSO has the oracle property, i.e., it performs as well as if the true underlying model were given in advance and has been shown. The maximum frequency Bootstrap-$t$ limits the calculation of the bagged estimator and its standard error to those resamples that led to the most chosen model. While Gupta and Lahiri's simulations show good performance of this approach, it does not do well in the cholesterol example;  MF 95\% CI [-5.93,15.35] compared to the smoothed interval [-13.3, 8.0]. This is because a substantial number of bootstrap resamples, which led to more negative predicted values are being ignored by the MF.  
+the proposed estimator does not apply to the residual bootstrap because this presupposes a choice of the model. He then gives a summary of his own work on model-free prediction as an alternative approach. Gupta and Lahiri present two alternative methods for constructing confidence intervals: the Adaptive LASSO~\citep{zou} and maximum frequency Bootstrap-$t$ (MF). The Adaptive LASSO has the oracle property, i.e., it performs asymptotically as well as if the true underlying model were given in advance. The maximum frequency Bootstrap-$t$ limits the calculation of the bagged estimator and its standard error to those resamples that led to the most chosen model. While Gupta and Lahiri's simulations show good performance of this approach, it does not do well in the cholesterol example;  MF 95\% CI [-5.93,15.35] compared to the smoothed interval [-13.3, 8.0]. This is because a substantial number of bootstrap resamples, which led to more negative predicted values, are being ignored by the MF.  
+
+Gelman and Vehtari offer a word of caution about the apparent generality of the bootstrap methodology. They give an example where it works well: when the models under consideration are relatively large, or when the dataset itself is large, posterior simulation in a Bayesian context can be costly; effective sampling of the parameter space can be difficult. They suggest that bootstrap smoothing can be helpful in constructing posterior intervals with small mean squared error. They then given an example were the bootstrap does not work well: in logistic regression, when a predictor configuration leads to only to events (or no event) being observed (i.e. $y_i=0$ or $y_i=1$ for all observations under that configuration), maximum likelihood estimates of the regression parameter will be unbounded, and smoothing will not be able to help. Moreover, bootstrap can exacerbate this behaviour: resampling with replacement can create synthetic datasets which exhibit this behaviour. Gelman and Vehtari thus suggest using regularization techniques \emph{before} using the bagging approach.
+
+Finally, in the Rejoinder, Efron thanks the discussants for expanding on his idea. He praises particularly the discussion by Wang, Sherwood and Li, which gives support to his approach by investigating its generality. However, he seems quite skeptical about its applicability in a high-dimensional setting. Note that he also mentions that bagging can be thought of as a form of nonparametric maximum likelihood estimation.
 
 
 \newpage
