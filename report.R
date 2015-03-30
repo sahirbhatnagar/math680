@@ -1,7 +1,7 @@
 ##################################
 # R source code file for user defined functions used in A2
 # 
-# Created by Sahir, March 22
+# Created by Sahir, Maxime, March 22
 # Updated: 
 # NOTE: 
 ##################################
@@ -421,7 +421,7 @@ param <- function(data){
 # R source code file for transforming Cholesterol data 
 # as in Efron JASA 2014 paper
 # 
-# Created by Maxime, March 20
+# Created by Sahir, Maxime, March 20
 # Updated: 
 # NOTE: 
 ##################################
@@ -460,7 +460,7 @@ DT[,label:=seq_along(1:nrow(DT))]
 ##################################
 # R source code file for section 1 of Efron JASA 2014 paper
 # 
-# Created by Sahir, Max, March 22
+# Created by Sahir, Maxime, March 22
 # Updated: 
 # NOTE: 
 ##################################
@@ -500,7 +500,7 @@ calibrate::textxy(-2.0,36,labs = 1, cex=1)
 ##################################
 # R source code file for section 2 of Efron JASA 2014 paper
 # 
-# Created by Sahir, Max, March 22
+# Created by Sahir, Maxime, March 22
 # Updated: 
 # NOTE: 
 ##################################
@@ -572,7 +572,7 @@ ggplot(df.cp, aes(muhat)) + geom_histogram(binwidth=1, colour="black", fill="whi
 ##################################
 # R source code file for section 3 of Efron JASA 2014 paper
 # 
-# Created by Sahir, Max, March 22
+# Created by Sahir, Maxime, March 22
 # Updated: 
 # NOTE: 
 ##################################
@@ -625,7 +625,7 @@ abline(v=0, lty=2)
 ##################################
 # R source code file for section 4 of Efron JASA 2014 paper
 # 
-# Created by Sahir, Max, March 27
+# Created by Sahir, Maxime, March 27
 # Updated: 
 # NOTE: 
 ##################################
@@ -685,7 +685,7 @@ calibrate::textxy(DT[,x][id.unord], rep(0.05,length(DT[,x][id.unord])),
 ##################################
 # R source code file for discussion of Efron JASA 2014 paper
 # 
-# Created by Sahir, Max, March 27
+# Created by Sahir, Maxime, March 27
 # Updated: 
 # NOTE: 
 ##################################
@@ -936,8 +936,7 @@ se2 <- ggplot(p.conf2, aes(model, estimate, ymin = 0, ymax=length, colour = type
   labs(x="penalty", y="length", title="Length of 95% Confidence Intervals for fitted value of Subject 95 based \n on B=4000 nonparametric bootsrap samples for Cp and BIC")
 se2 
 
-
-
+#http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
 multiplot(se1,se2, cols=2)
 
 
