@@ -1,0 +1,265 @@
+##################################
+# R source code file for transforming Cholesterol data 
+# as in Efron JASA 2014 paper
+# 
+# Created by Maxime, March 20
+# Updated: 
+# NOTE: 
+##################################
+
+library(bootstrap)
+
+fit <- lm(y ~ z + I(z^2) + I(z^3), data=cholost)
+new.comp <- seq(0,100, length.out=1000)
+new.val <- predict(object = fit, newdata = data.frame(z=new.comp))
+
+data <- cholost
+data[95,"y"] <- data[95,"y"]+45
+data$transf <- qnorm((rank(data$z) - 0.5)/nrow(data))
+
+
+fit2 <- lm(y ~ transf + I(transf^2) + I(transf^3), data)
+new.comp2 <- seq(min(data$transf),max(data$transf), length.out=1000)
+new.val2 <- predict(object = fit2, newdata = data.frame(transf=new.comp2))
+
+# get data into form so that it works with Sy's functions
+DT <- as.data.table(data[,c("y","transf")])
+setnames(DT,"transf","x")
+
+# make the transformation now. This is how my function was written up
+DT <- transform(DT, x2=x^2, x3=x^3, x4=x^4, x5=x^5, x6=x^6)
+
+# round the compliances to 5 digits, so that we can find the 11 subjects for Figure 5
+DT[,x:=round(x,5)]
+
+# need to add a label to each data point. This is used in the calculation of 
+# Efron's smoothed standard error estimate, i.e., we need to know how many
+# times each subject appears in the bootstrap sample
+DT[,label:=seq_along(1:nrow(DT))]
+
+
+##################################
+# R source code file for section 1 of Efron JASA 2014 paper
+# 
+# Created by Sahir, Max, March 22
+# Updated: 
+# NOTE: 
+##################################
+
+#rm(list=ls())
+
+# setwd("~/Biostats PhD/MATH680/Assignment 2/")
+# setwd("~/git_repositories/math680/")
+
+## ---- import-data ----
+source("trans_choles_data.R")
+
+## ---- hist-compliance ----
+hist(DT$x, xlab="transformed compliance", main="Histogram of transformed compliance")
+
+# Trying to guess 11 subject used for Figure 1 and 5 ----------------------------
+#DT[x %in% subjects.comp]
+
+## ---- figure-1 ----
+subjects.comp <- c(-2.25093, -1.36986, -0.82647, -0.54556,-0.22347,-0.00764,0.24704, 
+                   0.53672, 0.74327, 1.27808, 1.97051)
+
+fit <- lm(y ~ x + x2 + x3, data=DT)
+new.comp <- with(DT, seq(min(x),max(x), length.out=1000))
+new.val <- predict(object = fit, newdata = data.frame(x=new.comp, x2=new.comp^2, x3=new.comp^3))
+
+plot(y ~ x, data=DT, xlab="compliance", ylab="cholesterol decrease", ylim=c(-55,max(DT$y)))
+lines(x=new.comp, y=new.val, col="green", lwd=4)
+abline(h=0, lty=2)
+calibrate::textxy(subjects.comp, rep(-45,length(subjects.comp)), 
+                  labs = seq_along(1:length(subjects.comp)), cex = 0.8)
+for (k in seq_along(1:length(subjects.comp))) abline(v=subjects.comp[k], lty=2)
+points(-2.2509,11.50, pch=19, col="red")
+arrows(-2.1,35,-2.25,15, angle=15)
+calibrate::textxy(-2.0,36,labs = 1, cex=1)
+
+##################################
+# R source code file for section 2 of Efron JASA 2014 paper
+# 
+# Created by Sahir, Max, March 22
+# Updated: 
+# NOTE: 
+##################################
+
+## ---- bootstrap-samples ----
+B <- 4000
+samples <- replicate(B,DT[sample(1:nrow(DT),replace=T),],simplify=F)
+
+
+## ---- Cp-boot ----
+source("functions.R")
+
+#obs <- -2.32316
+obs <- -2.25093
+
+# Chosen models based on bootstrap replicates
+true.cp <- foreach(i = samples, .packages = c("data.table", "plyr")) %dopar% fit.best(i, method="CP", predict=obs)
+df.cp <- as.data.table(ldply(true.cp, data.frame))
+
+# how many times each model was chosen 
+perc.chosen <- apply(df.cp[,-7,with=FALSE], 2, sum)/B
+
+# percentile interval for bootstrap replicates (also used for Figure 3)
+ci.muhat <- data.frame(x=c(quantile(df.cp$muhat,c(0.025,0.975))[1],
+               quantile(df.cp$muhat,c(0.025,0.975))[2]),y=c(0,0))
+
+
+## ---- Cp-original ----
+fit.all <- fit.once(DT)
+muhat.obs <-fit.all[which.min(fit.all$criteria),"muhat"]
+
+
+# table 1 ----
+tab1 <- data.frame(model=c("Linear","Quadratic","Cubic","Quartic","Quintic",
+                           "Sextic"),
+                   m=fit.all$p, Cp=round(fit.all$criteria,0)-80000, "Bootstrap"=round(perc.chosen*100))
+
+# table 2 ----
+tab2 <- data.frame(rbind(sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(mean(muhat),2)]),
+sapply(paste0("m",1:6), function(i) df.cp[which(get(i)),round(sd(muhat),2)])))
+rownames(tab2) <- c("Mean","St.dev.")
+
+#some bootstrap samples that led to the sextic model
+#being selected give a terrible fit: 25, 675, 757, 1567, 2191, 2414, 3716
+#same thing for those that led to quintic model: 1538, 2778, 3096, 3315, 3417
+
+#removing them and recomputing table 2 shows that the discrepancy
+#between our table 2 and Efron's is due to bootstrap variability
+tab21 <- data.frame(rbind(sapply(paste0("m",1:6), 
+                                 function(i){
+                                     df.cp[-c(25,675,757,1567,2191,2414,
+                                              3716,1538,2778,3096,3315,3417)][which(get(i)),
+                                                                              round(mean(muhat),2)]}),
+                         sapply(paste0("m",1:6), 
+                                function(i){
+                                    df.cp[-c(25,675,757,1567,2191,2414,
+                                             3716,1538,2778,3096,3315,3417)][which(get(i)),
+                                                                             round(sd(muhat),2)]})))
+rownames(tab21) <- c("Mean","St.dev.")
+
+## ---- figure-3 ----
+# histogram of 4000 muhat bootstrap estimates: Figure 3
+ggplot(df.cp, aes(muhat)) + geom_histogram(binwidth=1, colour="black", fill="white")+xlim(-31,31)+
+    geom_vline(xintercept = muhat.obs, colour="red", linetype = "longdash",size=1.5)+
+    annotate("text", label = round(muhat.obs,2), x = 5, y = -7, size = 5, colour = "red")+
+    geom_point(data=ci.muhat, aes(x,y), size=4,shape=24, fill="red")+
+    xlab("bootstrap estimates for subject 1") + ylab("Frequency")
+
+##################################
+# R source code file for section 3 of Efron JASA 2014 paper
+# 
+# Created by Sahir, Max, March 22
+# Updated: 
+# NOTE: 
+##################################
+
+## ---- table-3 ----
+source("functions.R")
+jj <- fit.all(data=DT,pred=obs,bootsamples = samples, B=4000)
+
+#plot conf.intervals
+p1 <- data.frame(type="Standard", Interval=paste0("(",round(jj$l.stand[1],2), ", ", round(jj$u.stand[1],2),")"), 
+                 Length=jj$length[1], "Center point"=jj$center[1])
+p2 <- data.frame(type="Percentile", Interval=paste0("(",round(jj$l.quant[1],2), ", ", round(jj$u.quant[1],2),")"), 
+                 Length=jj$length.1[1], "Center point"=jj$center.1[1])
+p3 <- data.frame(type="Smoothed", Interval=paste0("(",round(jj$l.smooth[1],2), ", ", round(jj$u.smooth[1],2),")"), 
+                 Length=jj$length.2[1], "Center point"=jj$center.2[1])
+
+p.conf <- rbind(p1,p2,p3)
+
+ 
+## ---- figure-2 ----
+
+# JJ <- fit.all(data=DT, pred=DT[,x], bootsamples = samples, B=4000, single=FALSE)
+# se.bar <- summary(lm(y ~ x + x2 + x3, data=DT))$sigma
+
+JJ <- read.table("figure2data", 
+                 quote="\"", stringsAsFactors=FALSE)
+colnames(JJ) <- c("compliance", "muhat", "mutilde", "sdhat", "sdtilde", "l.stand", "u.stand", "center", "length", "coverage", 
+                  "sdbar", "l.quant", "u.quant", "center.1", "length.1", "coverage.1", "l.smooth", "u.smooth", 
+                  "center.2", "length.2", "coverage.2")
+
+X <- cbind(1, as.matrix(DT[, list(x, x2, x3)]))
+c.vec <- function(c) c(1, c, c^2, c^3)
+
+SEbar <- foreach(i = 1:nrow(JJ), .combine=c) %do% {
+    sqrt(JJ$sdbar[i]^2 * t(c.vec(JJ$compliance[i])) %*% 
+                  solve(t(X) %*% X) %*% 
+                  c.vec(JJ$compliance[i]))
+}
+
+plot(x=JJ$compliance, y=JJ$sdtilde/JJ$sdhat, ylim=c(0,1.6), 
+     col='red', pch=19, cex=0.6, xlab="adjusted compliance",
+     ylab="stdev ratio")
+lines(lowess(data.frame(x=JJ$compliance, y=JJ$sdtilde/JJ$sdhat)),
+      col='red')
+points(x=JJ$compliance, y=JJ$sdtilde/SEbar, 
+     col='blue', pch=19, cex=0.6)
+abline(h=c(1,0), lty=c(1,2), lwd=c(2,1))
+abline(v=0, lty=2)
+
+##################################
+# R source code file for section 4 of Efron JASA 2014 paper
+# 
+# Created by Sahir, Max, March 27
+# Updated: 
+# NOTE: 
+##################################
+
+## ---- figure-5 ----
+subjects.comp <- c(-2.25093, -1.36986, -0.82647, -0.54556,-0.22347,-0.00764,0.24704, 
+                   0.53672, 0.74327, 1.27808, 1.97051) 
+id.unord <- match(subjects.comp, round(DT[,x], 5))
+id.ord <- match(subjects.comp, round(sort(DT[,x]), 5))
+
+#X <- cbind(1, as.matrix(DT[,-c(1,ncol(DT)), with=FALSE]))
+
+X <- model.matrix(~x+x2+x3+x4+x5+x6,data=DT )
+
+#Sigma depends on compliance
+
+sigma.fn <- function(c){
+    23.7 + 5.49*c - 2.25*c^2 - 1.03*c^3
+}
+
+Sigma.mat <- diag(sigma.fn(DT[,x]))
+
+mu.bold <- X %*% coef(lm(y~., DT[,-ncol(DT), with=FALSE]))
+
+G <- t(X) %*% solve(Sigma.mat) %*% X
+beta.hat <- solve(G) %*% t(X) %*% solve(Sigma.mat) %*% as.matrix(DT[,y])
+V <- solve(G)
+
+#Simulation
+
+Ystar.i <- mvrnorm(n = 100, mu = mu.bold, Sigma = Sigma.mat)
+muHatStar.i <- apply(Ystar.i, 1, function(row) X %*% coef(lm.fit(y=row, x=X)))
+
+Ystarstar.ij <- foreach(i = 1:100, .packages="MASS") %dopar% {
+    mvrnorm(n = 1000, mu = muHatStar.i[,i], Sigma = Sigma.mat)
+}
+
+par.bs <- foreach(i = seq_along(1:length(Ystarstar.ij))) %dopar% {param(Ystarstar.ij[[i]])}
+
+mu.smooth <- sapply(par.bs, function(l) l[,1])
+sd.smooth <- sapply(par.bs, function(l) l[,2])
+
+#Figure 5 with selected subjects
+plot(x=1, y=1, type='n', ylim=c(0,2), xlim=c(min(DT[,x]), max(DT[,x])),
+     xlab="adjusted compliance, subjects 1 through 11", ylab="standard deviation estimates")
+for(i in 1:100) points(x=DT[,x][id.unord], y=sd.smooth[id.unord,i], 
+                       pch='-', cex=0.7)
+lines(x=DT[,x][order(DT[,x])][id.ord], 
+      y=apply(sd.smooth, 1, mean)[order(DT[,x])][id.ord], lty=2, 
+      col='blue', type='b', pch=19)
+lines(x=DT[,x][order(DT[,x])][id.ord], 
+      y=apply(mu.smooth, 1, sd)[order(DT[,x])][id.ord],
+      col='red', lwd=2)
+calibrate::textxy(DT[,x][id.unord], rep(0.05,length(DT[,x][id.unord])), 
+                  labs = seq_along(1:length(DT[,x][id.unord])), cex = 0.8)
+
